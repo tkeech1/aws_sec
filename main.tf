@@ -20,11 +20,16 @@ provider "aws" {
 }
 
 /* Guard Duty */
-module "guard_duty" {
+/*module "guard_duty" {
   source      = "./modules/guardduty"
   environment = var.environment
-}
+}*/
 
 // used only for importing an exisitng guard duty detector
 //resource "aws_guardduty_detector" "primary_detector" {}
+
+module "ec2_webserver" {
+  source      = "./modules/ec2"
+  environment = var.environment
+}
 
