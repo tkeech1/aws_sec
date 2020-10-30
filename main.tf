@@ -20,16 +20,20 @@ provider "aws" {
 }
 
 /* Guard Duty */
-/*module "guard_duty" {
+module "guard_duty" {
   source      = "./modules/guardduty"
   environment = var.environment
-}*/
+}
 
-// used only for importing an exisitng guard duty detector
-//resource "aws_guardduty_detector" "primary_detector" {}
-
+/* Create an ec2 server with ssh access */
 module "ec2_webserver" {
   source      = "./modules/ec2"
+  environment = var.environment
+}
+
+/* Create an amazon inspector to scan ec2 instances */
+module "inspector" {
+  source      = "./modules/inspector"
   environment = var.environment
 }
 
