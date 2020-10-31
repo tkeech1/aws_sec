@@ -20,20 +20,34 @@ provider "aws" {
 }
 
 /* Guard Duty */
-module "guard_duty" {
+/*module "guard_duty" {
   source      = "./modules/guardduty"
   environment = var.environment
-}
+}*/
 
 /* Create an ec2 server with ssh access */
-module "ec2_webserver" {
+/*module "ec2_webserver" {
   source      = "./modules/ec2"
   environment = var.environment
-}
+}*/
 
 /* Create an amazon inspector to scan ec2 instances */
-module "inspector" {
+/*module "inspector" {
   source      = "./modules/inspector"
   environment = var.environment
-}
+}*/
 
+// MWA
+/* static s3 web application */
+/*module "s3_web" {
+  source        = "./modules/s3_web"
+  environment   = "mwa"
+  sse_algorithm = var.sse_algorithm
+  bucket_name   = var.s3_web_bucket_name
+}*/
+
+/* mwa application */
+/*module "mwa" {
+  source      = "./modules/mwa"
+  environment = "mwa"
+}*/
