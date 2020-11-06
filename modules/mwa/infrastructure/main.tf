@@ -20,6 +20,7 @@ resource "aws_default_network_acl" "default" {
     to_port    = 22
   }
 
+  # AWS systems manager
   ingress {
     protocol   = "tcp"
     rule_no    = 200
@@ -29,15 +30,23 @@ resource "aws_default_network_acl" "default" {
     to_port    = 22
   }
 
-  # allow https return traffic from https://inspector-agent.amazonaws.com/linux/latest/install
-  # https://s3.dualstack.us-east-1.amazonaws.com/aws-agent.us-east-1/linux/latest/inspector.gpg
+  # allow https return traffic from http requests
   ingress {
     protocol   = "tcp"
     rule_no    = 400
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 32768
+    from_port  = 1024
     to_port    = 65535
+  }
+
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 500
+    action     = "allow"
+    cidr_block = "108.16.31.89/32"
+    from_port  = 80
+    to_port    = 80
   }
 
   egress {
@@ -62,11 +71,11 @@ resource "aws_default_security_group" "mwa_security_group" {
   }
 
   ingress {
-    description = "TLS from VPC"
-    from_port   = 443
-    to_port     = 443
+    description = "HTTP from VPC"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["108.16.31.89/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -158,7 +167,7 @@ resource "aws_route_table_association" "mwa_ra_public_subnet_two" {
   route_table_id = aws_route_table.mwa_ig_route_table.id
 }
 
-// Create NAT Gateways, route tables and attach them to the private subnet
+// Create NAT Gateways, route tables and attach them to the PUBLIC subnet
 resource "aws_eip" "mwa_eip_private_subnet_one_natgw" {
   vpc = true
   tags = {
@@ -175,7 +184,7 @@ resource "aws_eip" "mwa_eip_private_subnet_two_natgw" {
 
 resource "aws_nat_gateway" "private_subnet_one_natgw" {
   allocation_id = aws_eip.mwa_eip_private_subnet_one_natgw.id
-  subnet_id     = aws_subnet.private_subnet_one.id
+  subnet_id     = aws_subnet.public_subnet_one.id
   tags = {
     environment = var.environment
   }
@@ -183,7 +192,7 @@ resource "aws_nat_gateway" "private_subnet_one_natgw" {
 
 resource "aws_nat_gateway" "private_subnet_two_natgw" {
   allocation_id = aws_eip.mwa_eip_private_subnet_two_natgw.id
-  subnet_id     = aws_subnet.private_subnet_two.id
+  subnet_id     = aws_subnet.public_subnet_two.id
   tags = {
     environment = var.environment
   }
@@ -225,4 +234,56 @@ resource "aws_route_table_association" "mwa_ra_private_subnet_two" {
   route_table_id = aws_route_table.mwa_private_subnet_two_route_table.id
 }
 
-//
+// create a vpc endpoint for dynamodb for the private subnets
+resource "aws_vpc_endpoint" "mwa_dynamodb_vpc_endpoint" {
+  vpc_id            = aws_vpc.mwa_vpc.id
+  service_name      = "com.amazonaws.us-east-1.dynamodb"
+  vpc_endpoint_type = "Gateway"
+  policy            = data.aws_iam_policy_document.vpc_endpoint_dynamodb.json
+
+  route_table_ids = [aws_route_table.mwa_private_subnet_one_route_table.id, aws_route_table.mwa_private_subnet_two_route_table.id]
+  tags = {
+    environment = var.environment
+  }
+}
+
+// create an network load balancer
+resource "aws_lb" "mwa_nlb" {
+  name                       = "mwa-nlb"
+  internal                   = false
+  load_balancer_type         = "network"
+  subnets                    = [aws_subnet.public_subnet_one.id, aws_subnet.public_subnet_two.id]
+  enable_deletion_protection = false
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+// create a load balancer target group
+resource "aws_lb_target_group" "mwa_nlb_target_group" {
+  name        = "mwa-nlb-target-group"
+  port        = 8080
+  protocol    = "TCP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.mwa_vpc.id
+  health_check {
+    interval            = 10
+    path                = "/"
+    protocol            = "HTTP"
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+}
+
+// create a network load balancer listener
+resource "aws_lb_listener" "mwa_nlb_front_end" {
+  load_balancer_arn = aws_lb.mwa_nlb.arn
+  port              = "80"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.mwa_nlb_target_group.arn
+  }
+}

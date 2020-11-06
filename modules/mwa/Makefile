@@ -10,29 +10,29 @@ ENVIRONMENT?=ENVIRONMENT
 test-env:
 	echo "environment is ${ENVIRONMENT}"
 
-create-backend:
-	cd s3_state && terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
+plan-infra:
+	terraform init; terraform validate; terraform plan -target=module.mwa -target=module.mwa_ecr -var="environment=${ENVIRONMENT}";
 
-destroy-backend:
-	cd s3_state && terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}";
+plan-ecs:
+	terraform init; terraform validate; terraform plan -target=module.mwa_ecs -var="environment=${ENVIRONMENT}";
 
-plan:
-	terraform init; terraform validate; terraform plan -var="environment=${ENVIRONMENT}";
+apply-infra:
+	terraform init; terraform fmt; terraform apply -target=module.mwa -target=module.mwa_ecr -auto-approve -var="environment=${ENVIRONMENT}";
 
-apply:
-	terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
+apply-ecs:
+	terraform init; terraform fmt; terraform apply -target=module.mwa_ecs -auto-approve -var="environment=${ENVIRONMENT}";
 
 destroy:
 	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}"
 
 clean:
-	rm -rf .terraform; rm -rf s3_state/.terraform; rm -rf s3_state/terraform.tfstate; rm -rf s3_state/terraform.tfstate.backup;
+	rm -rf .terraform
 
 authenticate-docker-ecr:
 	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
 
 build-image: 
-	cd ./code/awswa/module-2/app && docker build . -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/mwa_ecr_repo/service:latest
+	cd ../../code/awswa/module-2/app && docker build . -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/mwa_ecr_repo/service:latest
 
 push-image: authenticate-docker-ecr
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/mwa_ecr_repo/service:latest
@@ -44,3 +44,5 @@ describe-image-repo:
 run-container:
 	docker run -p 8080:8080 ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/mwa_ecr_repo/service:latest
 	# browse to http://localhost:8080/mysfits
+
+apply-all: apply-infra build-image push-image apply-ecs
