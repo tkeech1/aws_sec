@@ -14,6 +14,14 @@ output "mwa_private_subnet_one_id" {
   value = aws_subnet.private_subnet_one.id
 }
 
+output "mwa_public_subnet_two_id" {
+  value = aws_subnet.public_subnet_two.id
+}
+
+output "mwa_public_subnet_one_id" {
+  value = aws_subnet.public_subnet_one.id
+}
+
 output "mwa_private_subnet_two_id" {
   value = aws_subnet.private_subnet_two.id
 }

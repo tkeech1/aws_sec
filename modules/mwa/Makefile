@@ -10,6 +10,12 @@ ENVIRONMENT?=ENVIRONMENT
 test-env:
 	echo "environment is ${ENVIRONMENT}"
 
+create-backend:
+	cd s3_state && terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
+
+destroy-backend:
+	cd s3_state && terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}";
+
 plan-infra:
 	terraform init; terraform validate; terraform plan -target=module.mwa -target=module.mwa_ecr -var="environment=${ENVIRONMENT}";
 
@@ -21,6 +27,9 @@ apply-infra:
 
 apply-ecs:
 	terraform init; terraform fmt; terraform apply -target=module.mwa_ecs -auto-approve -var="environment=${ENVIRONMENT}";
+
+destroy-ecs:
+	terraform init; terraform fmt; terraform destroy -target=module.mwa_ecs -auto-approve -var="environment=${ENVIRONMENT}";
 
 destroy:
 	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}"
@@ -46,3 +55,7 @@ run-container:
 	# browse to http://localhost:8080/mysfits
 
 apply-all: apply-infra build-image push-image apply-ecs
+
+
+# TODO - NACLS and Security Group Rules
+# TODO - Private subnet

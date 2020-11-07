@@ -48,7 +48,7 @@ resource "aws_ecs_service" "mwa_http_service" {
   network_configuration {
     subnets          = [var.private_subnet_one_id, var.private_subnet_two_id]
     security_groups  = [var.security_group_id]
-    assign_public_ip = false
+    assign_public_ip = true
   }
 
   load_balancer {

@@ -30,47 +30,65 @@ resource "aws_default_network_acl" "default" {
     to_port    = 22
   }
 
-  # allow https return traffic from http requests
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 300
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 80
+    to_port    = 80
+  }
+
   ingress {
     protocol   = "tcp"
     rule_no    = 400
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 8080
+    to_port    = 8080
+  }
+
+  # allow https return traffic from http requests
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 500
     action     = "allow"
     cidr_block = "0.0.0.0/0"
     from_port  = 1024
     to_port    = 65535
   }
 
-  ingress {
-    protocol   = "tcp"
-    rule_no    = 500
-    action     = "allow"
-    cidr_block = "108.16.31.89/32"
-    from_port  = 80
-    to_port    = 80
-  }
-
   egress {
     protocol   = -1
-    rule_no    = 100
+    rule_no    = 600
     action     = "allow"
     cidr_block = "0.0.0.0/0"
     from_port  = 0
     to_port    = 0
   }
+
 }
 
 resource "aws_default_security_group" "mwa_security_group" {
   vpc_id = aws_vpc.mwa_vpc.id
 
-  ingress {
+  /*ingress {
     description = "SSH from Local and EC2 Instance Connect"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["108.16.31.89/32", "18.206.107.24/29"]
-  }
+  }*/
 
-  ingress {
+  /*ingress {
+    description = "HTTP from VPC"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["108.16.31.89/32"]
+  }*/
+
+  /*ingress {
     description = "HTTP from VPC"
     from_port   = 80
     to_port     = 80
@@ -78,7 +96,24 @@ resource "aws_default_security_group" "mwa_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "HTTP from VPC"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }*/
+
+  ingress {
+    description = "allow all inbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
+    description = "allow all outbound"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -270,6 +305,7 @@ resource "aws_lb_target_group" "mwa_nlb_target_group" {
   health_check {
     interval            = 10
     path                = "/"
+    port                = 8080
     protocol            = "HTTP"
     healthy_threshold   = 3
     unhealthy_threshold = 3
