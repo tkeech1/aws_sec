@@ -35,11 +35,9 @@ resource "aws_ecs_task_definition" "mwa_ecs_task_definition" {
 }
 
 resource "aws_ecs_service" "mwa_http_service" {
-  name            = "mwa_http_service"
-  cluster         = aws_ecs_cluster.mwa_cluster.id
-  task_definition = aws_ecs_task_definition.mwa_ecs_task_definition.arn
-  #iam_role        = aws_iam_role.foo.arn
-  #depends_on      = [aws_iam_role_policy.foo]
+  name                               = "mwa_http_service"
+  cluster                            = aws_ecs_cluster.mwa_cluster.id
+  task_definition                    = aws_ecs_task_definition.mwa_ecs_task_definition.arn
   launch_type                        = "FARGATE"
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
@@ -48,7 +46,7 @@ resource "aws_ecs_service" "mwa_http_service" {
   network_configuration {
     subnets          = [var.private_subnet_one_id, var.private_subnet_two_id]
     security_groups  = [var.security_group_id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
 
   load_balancer {

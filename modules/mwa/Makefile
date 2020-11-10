@@ -3,7 +3,7 @@ AWS_ACCESS_KEY_ID?=AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY?=AWS_SECRET_ACCESS_KEY
 AWS_REGION?=AWS_REGION
 AWS_ACCOUNT_ID?=AWS_ACCOUNT_ID
-ENVIRONMENT?=dev
+ENVIRONMENT?=mwa
 # use the env var
 ENVIRONMENT?=ENVIRONMENT
 
@@ -11,10 +11,10 @@ test-env:
 	echo "environment is ${ENVIRONMENT}"
 
 create-backend:
-	cd s3_state && terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
+	cd ../../s3_state && terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
 
 destroy-backend:
-	cd s3_state && terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}";
+	cd ../../s3_state && terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}";
 
 plan-infra:
 	terraform init; terraform validate; terraform plan -target=module.mwa -target=module.mwa_ecr -var="environment=${ENVIRONMENT}";

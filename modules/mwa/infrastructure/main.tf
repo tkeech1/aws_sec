@@ -32,6 +32,15 @@ resource "aws_default_network_acl" "default" {
 
   ingress {
     protocol   = "tcp"
+    rule_no    = 800
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 22
+    to_port    = 22
+  }
+
+  ingress {
+    protocol   = "tcp"
     rule_no    = 300
     action     = "allow"
     cidr_block = "0.0.0.0/0"
@@ -56,6 +65,15 @@ resource "aws_default_network_acl" "default" {
     cidr_block = "0.0.0.0/0"
     from_port  = 1024
     to_port    = 65535
+  }
+
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 700
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
   }
 
   egress {
@@ -151,8 +169,8 @@ resource "aws_subnet" "public_subnet_two" {
 resource "aws_subnet" "private_subnet_one" {
   vpc_id                  = aws_vpc.mwa_vpc.id
   cidr_block              = "10.0.2.0/24"
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
+  availability_zone       = "us-east-1f"
+  map_public_ip_on_launch = false
 
   tags = {
     environment = var.environment
@@ -162,8 +180,8 @@ resource "aws_subnet" "private_subnet_one" {
 resource "aws_subnet" "private_subnet_two" {
   vpc_id                  = aws_vpc.mwa_vpc.id
   cidr_block              = "10.0.3.0/24"
-  availability_zone       = "us-east-1b"
-  map_public_ip_on_launch = true
+  availability_zone       = "us-east-1c"
+  map_public_ip_on_launch = false
 
   tags = {
     environment = var.environment
