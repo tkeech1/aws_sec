@@ -328,6 +328,9 @@ resource "aws_lb_target_group" "mwa_nlb_target_group" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
   }
+  tags = {
+    environment = var.environment
+  }
 }
 
 // create a network load balancer listener
@@ -340,4 +343,35 @@ resource "aws_lb_listener" "mwa_nlb_front_end" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.mwa_nlb_target_group.arn
   }
+}
+
+resource "aws_api_gateway_vpc_link" "mwa_api_gateway" {
+  name        = "mwa_api_gateway"
+  description = "API Gateway frontend for NLB"
+  target_arns = [aws_lb.mwa_nlb.arn]
+  tags = {
+    environment = var.environment
+  }
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_api_gateway_rest_api" "mwa_rest_api" {
+  name        = "mwa_rest_api"
+  description = "This is my API for demonstration purposes"
+  body        = templatefile("./infrastructure/api-swagger.json", { region = var.region, account_id = data.aws_caller_identity.current.account_id, cognito_user_pool_id = var.cognito_user_pool_id, vpc_link_id = aws_api_gateway_vpc_link.mwa_api_gateway.id, nlb_dns_name = aws_lb.mwa_nlb.dns_name })
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_api_gateway_deployment" "mwa_api_gateway_deployment" {
+  rest_api_id = aws_api_gateway_rest_api.mwa_rest_api.id
+  stage_name  = var.environment
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }

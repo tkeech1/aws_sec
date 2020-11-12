@@ -23,10 +23,3 @@ resource "aws_s3_bucket" "s3_static_web" {
   }
 }
 
-resource "aws_s3_bucket_object" "file_upload" {
-  bucket       = aws_s3_bucket.s3_static_web.id
-  key          = "index.html"
-  source       = "./code/awswa/module-1/web/index.html"
-  content_type = "text/html"
-  etag         = filemd5("./code/awswa/module-1/web/index.html")
-}

@@ -10,5 +10,3 @@ variable "sse_algorithm" {
 variable "s3_web_bucket_name" {
   type = string
 }
-
-
