@@ -6,7 +6,8 @@ resource "aws_ecs_cluster" "mwa_cluster" {
 }
 
 resource "aws_cloudwatch_log_group" "mwa_log_group" {
-  name = "mwa_log_group"
+  name              = "mwa_log_group"
+  retention_in_days = 1
 
   tags = {
     environment = var.environment

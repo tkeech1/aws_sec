@@ -10,6 +10,9 @@ ENVIRONMENT?=ENVIRONMENT
 test-env:
 	echo "environment is ${ENVIRONMENT}"
 
+init-validate:
+	terraform init; terraform validate;
+
 create-backend:
 	cd ../../s3_state && terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
 
@@ -41,7 +44,7 @@ destroy:
 	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}"
 
 clean:
-	rm -rf .terraform
+	rm -rf .terraform stream_processor_lambda.zip
 
 authenticate-docker-ecr:
 	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
@@ -67,9 +70,32 @@ scan-dynamodb:
 	aws dynamodb scan --table-name MysfitsTable
 
 s3-deploy:
-	aws s3 cp --recursive ../../code/awswa/module-4/web/ s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	aws s3 cp --recursive s3deploy/tmp/ s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+
+s3-deploy-prep:
+	mkdir -p s3deploy/tmp/
+	cp -r ../../code/awswa/module-4/web/* s3deploy/tmp/
+
+s3-deploy-cleanup:
+	rm -rf s3deploy/tmp/
 
 apply-all: apply-infra s3-deploy build-image push-image load-dynamodb apply-ecs
+
+create-lambda-binary:
+	cd ../../code/awswa/module-5/app/streaming && pip install requests -t .
+	zip stream_processor_lambda.zip ../../code/awswa/module-5/app/streaming
+
+plan-analytics: create-lambda-binary init-validate
+	terraform plan -target=module.mwa_analytics -var="environment=${ENVIRONMENT}";
+
+apply-analytics: create-lambda-binary init-validate
+	terraform apply -target=module.mwa_analytics -var="environment=${ENVIRONMENT}";
+
+plan-s3web: init-validate
+	terraform plan -target=module.mwa_s3web -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
+
+apply-s3web: init-validate
+	terraform apply -target=module.mwa_s3web -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
 
 
 # TODO - NACLS and Security Group Rules cleanup

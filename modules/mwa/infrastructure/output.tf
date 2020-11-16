@@ -30,3 +30,6 @@ output "mwa_target_group_arn" {
   value = aws_lb_target_group.mwa_nlb_target_group.arn
 }
 
+output "mwa_api_endpoint" {
+  value = aws_api_gateway_deployment.mwa_api_gateway_deployment.invoke_url
+}

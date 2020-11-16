@@ -16,6 +16,12 @@
         "awslogs-stream-prefix": "${mwa_log_group}"
       }
     },
+    "environment": [
+      {
+        "name": "variable",
+        "value": "value"
+      }
+    ],
     "essential": true
   }
 ]

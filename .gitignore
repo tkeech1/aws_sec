@@ -112,3 +112,5 @@ terraform.tfstate.backup
 data/
 code/
 modules_old/
+tmp*
+web_url*

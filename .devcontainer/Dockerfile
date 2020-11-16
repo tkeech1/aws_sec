@@ -37,3 +37,5 @@ RUN usermod -aG container_docker $USERNAME
 
 # change the username
 USER $USERNAME
+
+RUN pip3 install jinja2 --user
