@@ -8,4 +8,3 @@ variable "sse_algorithm" {
   type = string
 }
 
-

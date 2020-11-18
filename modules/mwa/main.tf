@@ -55,10 +55,11 @@ module "mwa_analytics" {
 }
 
 module "mwa_s3deploy" {
-  source = "./s3deploy"
-  #cognito_user_pool_id        = module.mwa_cognito.cognito_user_pool_id
-  #cognito_user_pool_client_id = module.mwa_cognito.cognito_user_pool_id
-  #region                      = var.region
-  #api_endpoint                = module.mwa.mwa_api_endpoint
-  website_endpoint = module.mwa_s3web.mwa_webstite_endpoint
+  source                      = "./s3deploy"
+  cognito_user_pool_id        = module.mwa_cognito.cognito_user_pool_id
+  cognito_user_pool_client_id = module.mwa_cognito.cognito_user_pool_client_id
+  region                      = var.region
+  api_endpoint                = module.mwa.mwa_api_endpoint
+  website_endpoint            = module.mwa_s3web.mwa_website_endpoint
+  depends_on                  = [module.mwa]
 }

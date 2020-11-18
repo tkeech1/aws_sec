@@ -1,4 +1,4 @@
-/*variable "cognito_user_pool_id" {
+variable "cognito_user_pool_id" {
   type = string
 }
 
@@ -12,7 +12,7 @@ variable "region" {
 
 variable "api_endpoint" {
   type = string
-}*/
+}
 
 variable "website_endpoint" {
   type = string

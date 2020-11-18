@@ -69,17 +69,20 @@ load-dynamodb:
 scan-dynamodb:
 	aws dynamodb scan --table-name MysfitsTable
 
-s3-deploy:
-	aws s3 cp --recursive s3deploy/tmp/ s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+plan-s3deploy: init-validate
+	terraform plan -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
 
-s3-deploy-prep:
-	mkdir -p s3deploy/tmp/
-	cp -r ../../code/awswa/module-4/web/* s3deploy/tmp/
+apply-s3deploy: init-validate
+	terraform apply -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
+
+s3-deploy:
+	aws s3 cp --recursive ../../code/awswa/module-4/web s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	aws s3 cp --recursive ./s3deploy/jinja2_templates/output s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 
 s3-deploy-cleanup:
-	rm -rf s3deploy/tmp/
+	rm -rf jinja2_templates/output/*
 
-apply-all: apply-infra s3-deploy build-image push-image load-dynamodb apply-ecs
+apply-all: apply-infra apply-s3deploy s3-deploy build-image push-image load-dynamodb apply-ecs
 
 create-lambda-binary:
 	cd ../../code/awswa/module-5/app/streaming && pip install requests -t .
@@ -91,14 +94,6 @@ plan-analytics: create-lambda-binary init-validate
 apply-analytics: create-lambda-binary init-validate
 	terraform apply -target=module.mwa_analytics -var="environment=${ENVIRONMENT}";
 
-plan-s3web: init-validate
-	terraform plan -target=module.mwa_s3web -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
-
-apply-s3web: init-validate
-	terraform apply -target=module.mwa_s3web -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
-
-
 # TODO - NACLS and Security Group Rules cleanup
-# TODO - automatically replace html file values
 # TODO - move NLB to internal (no external IP)
 # TODO - modify frontend
