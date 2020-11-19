@@ -303,9 +303,9 @@ resource "aws_vpc_endpoint" "mwa_dynamodb_vpc_endpoint" {
 // create an network load balancer
 resource "aws_lb" "mwa_nlb" {
   name                       = "mwa-nlb"
-  internal                   = false
+  internal                   = true
   load_balancer_type         = "network"
-  subnets                    = [aws_subnet.public_subnet_one.id, aws_subnet.public_subnet_two.id]
+  subnets                    = [aws_subnet.private_subnet_one.id, aws_subnet.private_subnet_two.id]
   enable_deletion_protection = false
 
   tags = {

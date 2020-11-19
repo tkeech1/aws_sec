@@ -37,3 +37,9 @@ TODO:
 * Secrets - https://blog.gruntwork.io/a-comprehensive-guide-to-managing-secrets-in-your-terraform-code-1d586955ace1
 * Terratest
 * Credentials
+* NACLS and Security Group Rules cleanup
+* let's encrypt
+* variable substitutions
+* fix verify
+* modify frontend
+* separate repo for MWA

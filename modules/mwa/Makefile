@@ -73,7 +73,7 @@ plan-s3deploy: init-validate
 	terraform plan -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
 
 apply-s3deploy: init-validate
-	terraform apply -target=module.mwa_s3deploy -var="environment=${ENVIRONMENT}";
+	terraform apply -target=module.mwa_s3deploy -auto-approve -var="environment=${ENVIRONMENT}";
 
 s3-deploy:
 	aws s3 cp --recursive ../../code/awswa/module-4/web s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
@@ -81,6 +81,10 @@ s3-deploy:
 
 s3-deploy-cleanup:
 	rm -rf jinja2_templates/output/*
+
+# not working
+#verify:
+	#until curl --quiet http://tdk-awssec-s3-web.io-mwa.s3-website-us-east-1.amazonaws.com | grep -q Snowflake; do echo "Waiting for backend to be ready..."; sleep 1; done
 
 apply-all: apply-infra apply-s3deploy s3-deploy build-image push-image load-dynamodb apply-ecs
 
@@ -94,6 +98,4 @@ plan-analytics: create-lambda-binary init-validate
 apply-analytics: create-lambda-binary init-validate
 	terraform apply -target=module.mwa_analytics -var="environment=${ENVIRONMENT}";
 
-# TODO - NACLS and Security Group Rules cleanup
-# TODO - move NLB to internal (no external IP)
-# TODO - modify frontend
+
