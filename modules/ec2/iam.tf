@@ -47,6 +47,13 @@ resource "aws_iam_role_policy" "ssm_policy" {
                 "ec2messages:SendReply"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [${aws_s3_bucket.s3_source_code.arn}/*]
         }
     ]
 }

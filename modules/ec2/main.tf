@@ -142,3 +142,48 @@ resource "aws_eip" "web_eip" {
     environment = var.environment
   }
 }
+
+// create a network load balancer
+resource "aws_lb" "web_nlb" {
+  name                       = "web-nlb"
+  internal                   = false
+  load_balancer_type         = "network"
+  subnets                    = [aws_subnet.web_subnet.id]
+  enable_deletion_protection = false
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+// create a load balancer target group
+resource "aws_lb_target_group" "web_nlb_target_group" {
+  name        = "web-nlb-target-group"
+  port        = 8000
+  protocol    = "TCP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.web_vpc.id
+  health_check {
+    interval            = 10
+    path                = "/"
+    port                = 8000
+    protocol            = "HTTP"
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+  tags = {
+    environment = var.environment
+  }
+}
+
+// create a network load balancer listener
+resource "aws_lb_listener" "web_nlb_front_end" {
+  load_balancer_arn = aws_lb.web_nlb.arn
+  port              = "80"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_nlb_target_group.arn
+  }
+}

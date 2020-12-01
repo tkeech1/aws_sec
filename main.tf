@@ -20,19 +20,21 @@ provider "aws" {
 }
 
 /* Guard Duty */
-module "guard_duty" {
+/*module "guard_duty" {
   source      = "./modules/guardduty"
   environment = var.environment
-}
+}*/
 
 /* Create an ec2 server with ssh access */
 module "ec2_webserver" {
-  source      = "./modules/ec2"
-  environment = var.environment
+  source        = "./modules/ec2"
+  bucket_name   = var.s3_web_bucket_name
+  environment   = var.environment
+  sse_algorithm = var.sse_algorithm
 }
 
 /* Create an amazon inspector to scan ec2 instances */
-module "inspector" {
+/*module "inspector" {
   source      = "./modules/inspector"
   environment = var.environment
-}
+}*/
