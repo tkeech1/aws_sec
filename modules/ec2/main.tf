@@ -143,6 +143,7 @@ resource "aws_eip" "web_eip" {
   }
 }
 
+/*
 // create a network load balancer
 resource "aws_lb" "web_nlb" {
   name                       = "web-nlb"
@@ -187,3 +188,4 @@ resource "aws_lb_listener" "web_nlb_front_end" {
     target_group_arn = aws_lb_target_group.web_nlb_target_group.arn
   }
 }
+*/
