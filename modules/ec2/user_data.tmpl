@@ -2,10 +2,11 @@
 
 # setup aws inspector for security/compliance scanning
 wget https://inspector-agent.amazonaws.com/linux/latest/install
-sudo bash install
+bash install
 
-sudo yum install -y python3.x86_64 python3-pip.noarch
-pip3 install fastapi uvicorn --user
+yum install -y python3.x86_64 python3-pip.noarch
+sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn"
 
-# uvicorn main:app --reload --host 0.0.0.0
+sudo -u ec2-user bash -c "/usr/bin/aws s3api get-object --bucket tdk-awssec-s3-web.io-dev --key main.py /home/ec2-user/main.py"
+sudo -u ec2-user bash -c "cd /home/ec2-user && ~/.local/bin/uvicorn main:app --reload --host 0.0.0.0"
 

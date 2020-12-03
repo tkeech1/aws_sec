@@ -22,8 +22,11 @@ plan:
 apply:
 	terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
 
+apply-ec2:
+	terraform init; terraform fmt; terraform apply -target=module.ec2_webserver -auto-approve -var="environment=${ENVIRONMENT}";
+
 apply-s3:
-	terraform init; terraform fmt; terraform apply -target=module.ec2.s3_source_code -auto-approve -var="environment=${ENVIRONMENT}";
+	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}";
 
 destroy:
 	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}"
@@ -33,4 +36,6 @@ clean:
 
 upload-s3:
 	aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+
+web: apply-s3 upload-s3 apply-ec2
 
