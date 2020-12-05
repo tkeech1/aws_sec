@@ -27,17 +27,20 @@ provider "aws" {
 
 /* Create an s3 bucket */
 module "s3" {
-  source        = "./modules/s3"
-  bucket_name   = var.s3_web_bucket_name
-  environment   = var.environment
-  sse_algorithm = var.sse_algorithm
+  source             = "./modules/s3"
+  source_bucket_name = var.s3_source_bucket_name
+  logs_bucket_name   = var.s3_logs_bucket_name
+  environment        = var.environment
+  sse_algorithm      = var.sse_algorithm
 }
 
 /* Create an ec2 server with ssh access */
 module "ec2_webserver" {
-  source      = "./modules/ec2"
-  bucket_arn  = module.s3.bucket_arn
-  environment = var.environment
+  source            = "./modules/ec2"
+  source_bucket_arn = module.s3.source_bucket_arn
+  log_bucket_name   = module.s3.logs_bucket_name
+  environment       = var.environment
+  #depends_on        = [module.s3]
 }
 
 /* Create an amazon inspector to scan ec2 instances */

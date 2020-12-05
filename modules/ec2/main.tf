@@ -1,5 +1,5 @@
 resource "aws_vpc" "web_vpc" {
-  cidr_block           = "10.0.0.0/24"
+  cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
 
   tags = {
@@ -28,6 +28,16 @@ resource "aws_default_network_acl" "default" {
     to_port    = 22
   }
 
+  // allow all traffic to load balancer on listener port
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 300
+    action     = "allow"
+    cidr_block = "108.16.31.89/32"
+    from_port  = 80
+    to_port    = 80
+  }
+
   # allow https return traffic from https://inspector-agent.amazonaws.com/linux/latest/install
   # https://s3.dualstack.us-east-1.amazonaws.com/aws-agent.us-east-1/linux/latest/inspector.gpg
   ingress {
@@ -35,7 +45,7 @@ resource "aws_default_network_acl" "default" {
     rule_no    = 400
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 32768
+    from_port  = 1024
     to_port    = 65535
   }
 
@@ -53,7 +63,7 @@ resource "aws_default_security_group" "web_security_group" {
   vpc_id = aws_vpc.web_vpc.id
 
   ingress {
-    description = "SSH from Local and EC2 Instance Connect"
+    description = "SSH from home and EC2 Instance Connect"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -61,9 +71,17 @@ resource "aws_default_security_group" "web_security_group" {
   }
 
   ingress {
-    description = "TLS from VPC"
-    from_port   = 443
-    to_port     = 443
+    description = "Web traffic"
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["108.16.31.89/32", "10.0.0.0/16"]
+  }
+
+  ingress {
+    description = "Web traffic"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["108.16.31.89/32"]
   }
@@ -80,9 +98,19 @@ resource "aws_default_security_group" "web_security_group" {
   }
 }
 
-resource "aws_subnet" "web_subnet" {
+resource "aws_subnet" "web_subnet_1" {
   vpc_id            = aws_vpc.web_vpc.id
-  cidr_block        = "10.0.0.0/24"
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "us-east-1a"
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_subnet" "web_subnet_2" {
+  vpc_id            = aws_vpc.web_vpc.id
+  cidr_block        = "10.0.2.0/24"
   availability_zone = "us-east-1f"
 
   tags = {
@@ -122,35 +150,31 @@ resource "aws_instance" "web_server" {
   instance_type               = "t3.nano"
   key_name                    = aws_key_pair.ec2_public_key.key_name
   iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
-  subnet_id                   = aws_subnet.web_subnet.id
-  private_ip                  = "10.0.0.10"
+  subnet_id                   = aws_subnet.web_subnet_1.id
+  private_ip                  = "10.0.1.10"
   vpc_security_group_ids      = [aws_default_security_group.web_security_group.id]
   associate_public_ip_address = true
   user_data                   = file("./modules/ec2/user_data.tmpl")
-  tags = {
-    environment = var.environment
-  }
-}
-
-resource "aws_eip" "web_eip" {
-  instance                  = aws_instance.web_server.id
-  vpc                       = true
-  associate_with_private_ip = "10.0.0.10"
-  depends_on                = [aws_internet_gateway.web_internet_gateway]
+  #depends_on                  = [aws_nat_gateway.web_nat_gateway]
 
   tags = {
     environment = var.environment
   }
 }
 
-/*
-// create a network load balancer
-resource "aws_lb" "web_nlb" {
-  name                       = "web-nlb"
-  internal                   = false
-  load_balancer_type         = "network"
-  subnets                    = [aws_subnet.web_subnet.id]
+// create an application load balancer
+resource "aws_lb" "web_alb" {
+  name               = "web-alb"
+  internal           = false
+  load_balancer_type = "application"
+  #security_groups            = [aws_security_group.lb_security_group.id]
+  subnets                    = [aws_subnet.web_subnet_1.id, aws_subnet.web_subnet_2.id]
   enable_deletion_protection = false
+
+  access_logs {
+    bucket  = var.log_bucket_name
+    enabled = true
+  }
 
   tags = {
     environment = var.environment
@@ -158,11 +182,11 @@ resource "aws_lb" "web_nlb" {
 }
 
 // create a load balancer target group
-resource "aws_lb_target_group" "web_nlb_target_group" {
-  name        = "web-nlb-target-group"
+resource "aws_lb_target_group" "web_alb_target_group" {
+  name        = "web-alb-target-group"
   port        = 8000
-  protocol    = "TCP"
-  target_type = "ip"
+  protocol    = "HTTP"
+  target_type = "instance"
   vpc_id      = aws_vpc.web_vpc.id
   health_check {
     interval            = 10
@@ -178,14 +202,19 @@ resource "aws_lb_target_group" "web_nlb_target_group" {
 }
 
 // create a network load balancer listener
-resource "aws_lb_listener" "web_nlb_front_end" {
-  load_balancer_arn = aws_lb.web_nlb.arn
+resource "aws_lb_listener" "web_alb_front_end" {
+  load_balancer_arn = aws_lb.web_alb.arn
   port              = "80"
-  protocol          = "TCP"
+  protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.web_nlb_target_group.arn
+    target_group_arn = aws_lb_target_group.web_alb_target_group.arn
   }
 }
-*/
+
+resource "aws_lb_target_group_attachment" "web_targets" {
+  target_group_arn = aws_lb_target_group.web_alb_target_group.arn
+  target_id        = aws_instance.web_server.id
+  port             = 8000
+}

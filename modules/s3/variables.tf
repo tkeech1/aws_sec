@@ -1,7 +1,10 @@
 variable "environment" {
   type = string
 }
-variable "bucket_name" {
+variable "source_bucket_name" {
+  type = string
+}
+variable "logs_bucket_name" {
   type = string
 }
 variable "sse_algorithm" {

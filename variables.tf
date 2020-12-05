@@ -7,6 +7,9 @@ variable "environment" {
 variable "sse_algorithm" {
   type = string
 }
-variable "s3_web_bucket_name" {
+variable "s3_source_bucket_name" {
+  type = string
+}
+variable "s3_logs_bucket_name" {
   type = string
 }

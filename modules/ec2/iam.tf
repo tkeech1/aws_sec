@@ -53,7 +53,7 @@ resource "aws_iam_role_policy" "ssm_policy" {
             "Action": [
                 "s3:GetObject"
             ],
-            "Resource": ["${var.bucket_arn}/*"]
+            "Resource": ["${var.source_bucket_arn}/*"]
         }
     ]
 }
