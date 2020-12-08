@@ -25,6 +25,9 @@ apply:
 apply-ec2:
 	terraform init; terraform fmt; terraform apply -target=module.ec2_webserver -auto-approve -var="environment=${ENVIRONMENT}";
 
+plan-ec2:
+	terraform init; terraform fmt; terraform plan -target=module.ec2_webserver -var="environment=${ENVIRONMENT}";
+
 apply-s3:
 	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}";
 

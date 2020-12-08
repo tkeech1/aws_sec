@@ -98,7 +98,7 @@ resource "aws_default_security_group" "web_security_group" {
   }
 }
 
-resource "aws_subnet" "web_subnet_1" {
+resource "aws_subnet" "public_subnet_1" {
   vpc_id            = aws_vpc.web_vpc.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
@@ -108,9 +108,29 @@ resource "aws_subnet" "web_subnet_1" {
   }
 }
 
-resource "aws_subnet" "web_subnet_2" {
+resource "aws_subnet" "public_subnet_2" {
   vpc_id            = aws_vpc.web_vpc.id
   cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-east-1f"
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_subnet" "private_subnet_1" {
+  vpc_id            = aws_vpc.web_vpc.id
+  cidr_block        = "10.0.3.0/24"
+  availability_zone = "us-east-1a"
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_subnet" "private_subnet_2" {
+  vpc_id            = aws_vpc.web_vpc.id
+  cidr_block        = "10.0.4.0/24"
   availability_zone = "us-east-1f"
 
   tags = {
@@ -139,6 +159,75 @@ resource "aws_default_route_table" "web_default_route_table" {
   }
 }
 
+
+// Create NAT Gateways, route tables and attach them to the PUBLIC subnet
+resource "aws_eip" "web_eip_public_subnet_1_natgw" {
+  vpc = true
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_eip" "web_eip_public_subnet_2_natgw" {
+  vpc = true
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_nat_gateway" "public_subnet_1_natgw" {
+  allocation_id = aws_eip.web_eip_public_subnet_1_natgw.id
+  subnet_id     = aws_subnet.public_subnet_1.id
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_nat_gateway" "public_subnet_2_natgw" {
+  allocation_id = aws_eip.web_eip_public_subnet_2_natgw.id
+  subnet_id     = aws_subnet.public_subnet_2.id
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_route_table" "web_private_subnet_1_route_table" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.public_subnet_1_natgw.id
+  }
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_route_table" "web_private_subnet_2_route_table" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.public_subnet_2_natgw.id
+  }
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_route_table_association" "web_ra_private_subnet_1" {
+  subnet_id      = aws_subnet.private_subnet_1.id
+  route_table_id = aws_route_table.web_private_subnet_1_route_table.id
+}
+
+resource "aws_route_table_association" "mwa_ra_private_subnet_2" {
+  subnet_id      = aws_subnet.private_subnet_2.id
+  route_table_id = aws_route_table.web_private_subnet_2_route_table.id
+}
+
+
 # create the public key to connect to the ec2 instance
 resource "aws_key_pair" "ec2_public_key" {
   key_name   = "todd@tk"
@@ -150,12 +239,29 @@ resource "aws_instance" "web_server" {
   instance_type               = "t3.nano"
   key_name                    = aws_key_pair.ec2_public_key.key_name
   iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
-  subnet_id                   = aws_subnet.web_subnet_1.id
+  subnet_id                   = aws_subnet.private_subnet_1.id
+  private_ip                  = "10.0.3.10"
+  vpc_security_group_ids      = [aws_default_security_group.web_security_group.id]
+  associate_public_ip_address = false
+  user_data                   = file("./modules/ec2/user_data.tmpl")
+  depends_on                  = [aws_nat_gateway.public_subnet_1_natgw]
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_instance" "public_server" {
+  ami                         = "ami-0947d2ba12ee1ff75"
+  instance_type               = "t3.nano"
+  key_name                    = aws_key_pair.ec2_public_key.key_name
+  iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
+  subnet_id                   = aws_subnet.public_subnet_1.id
   private_ip                  = "10.0.1.10"
   vpc_security_group_ids      = [aws_default_security_group.web_security_group.id]
   associate_public_ip_address = true
   user_data                   = file("./modules/ec2/user_data.tmpl")
-  #depends_on                  = [aws_nat_gateway.web_nat_gateway]
+  depends_on                  = [aws_nat_gateway.public_subnet_1_natgw]
 
   tags = {
     environment = var.environment
@@ -168,7 +274,7 @@ resource "aws_lb" "web_alb" {
   internal           = false
   load_balancer_type = "application"
   #security_groups            = [aws_security_group.lb_security_group.id]
-  subnets                    = [aws_subnet.web_subnet_1.id, aws_subnet.web_subnet_2.id]
+  subnets                    = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
   enable_deletion_protection = false
 
   access_logs {
