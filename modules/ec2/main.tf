@@ -7,9 +7,12 @@ resource "aws_vpc" "web_vpc" {
   }
 }
 
-resource "aws_default_network_acl" "default" {
-  default_network_acl_id = aws_vpc.web_vpc.default_network_acl_id
+// network acl for public subnet
+resource "aws_network_acl" "public_subnet_nacl" {
+  vpc_id     = aws_vpc.web_vpc.id
+  subnet_ids = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
 
+  // inbound ssh
   ingress {
     protocol   = "tcp"
     rule_no    = 100
@@ -19,6 +22,7 @@ resource "aws_default_network_acl" "default" {
     to_port    = 22
   }
 
+  // ssh access for AWS Instance Connect
   ingress {
     protocol   = "tcp"
     rule_no    = 200
@@ -28,7 +32,7 @@ resource "aws_default_network_acl" "default" {
     to_port    = 22
   }
 
-  // allow all traffic to load balancer on listener port
+  // allow http traffic on listener port
   ingress {
     protocol   = "tcp"
     rule_no    = 300
@@ -36,6 +40,72 @@ resource "aws_default_network_acl" "default" {
     cidr_block = "108.16.31.89/32"
     from_port  = 80
     to_port    = 80
+  }
+
+  # allows the load balancer to communicate to the instance in a public subnet
+  /*ingress {
+    protocol   = "tcp"
+    rule_no    = 400
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 80
+    to_port    = 80
+  }*/
+
+  # allows the private subnet to communicate out to Internet through the public subnet
+  /*ingress {
+    protocol   = "tcp"
+    rule_no    = 500
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 443
+    to_port    = 443
+  }*/
+
+  # allow https return traffic from https://inspector-agent.amazonaws.com/linux/latest/install
+  # https://s3.dualstack.us-east-1.amazonaws.com/aws-agent.us-east-1/linux/latest/inspector.gpg
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 600
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+
+  egress {
+    protocol   = -1
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+}
+
+/*
+// network acl for private subnet
+resource "aws_network_acl" "private_subnet_nacl" {
+  vpc_id     = aws_vpc.web_vpc.id
+  subnet_ids = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 22
+    to_port    = 22
+  }
+
+  // allow all traffic to load balancer on listener port
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 300
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 8000
+    to_port    = 8000
   }
 
   # allow https return traffic from https://inspector-agent.amazonaws.com/linux/latest/install
@@ -58,26 +128,56 @@ resource "aws_default_network_acl" "default" {
     to_port    = 0
   }
 }
+*/
 
-resource "aws_default_security_group" "web_security_group" {
+
+// public security group
+resource "aws_security_group" "public_security_group" {
   vpc_id = aws_vpc.web_vpc.id
 
+  // inbound ssh from AWS instance connect
   ingress {
-    description = "SSH from home and EC2 Instance Connect"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["108.16.31.89/32", "18.206.107.24/29"]
   }
 
+  // inbound on instance listener port (direct access to instance)
+  /*ingress {
+    description = "Web traffic"
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }*/
+
+  // access to the listener port from the load balancer
   ingress {
     description = "Web traffic"
     from_port   = 8000
     to_port     = 8000
     protocol    = "tcp"
-    cidr_blocks = ["108.16.31.89/32", "10.0.0.0/16"]
+    cidr_blocks = ["10.0.0.0/16"]
   }
 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+// load balancer security group
+resource "aws_security_group" "load_balancer_security_group" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  // inbound on instance listener port
   ingress {
     description = "Web traffic"
     from_port   = 80
@@ -97,6 +197,40 @@ resource "aws_default_security_group" "web_security_group" {
     environment = var.environment
   }
 }
+
+/*
+// private security group
+resource "aws_security_group" "private_security_group" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  ingress {
+    description = "SSH from home and EC2 Instance Connect"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    description = "Web traffic"
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    environment = var.environment
+  }
+}
+*/
 
 resource "aws_subnet" "public_subnet_1" {
   vpc_id            = aws_vpc.web_vpc.id
@@ -118,6 +252,7 @@ resource "aws_subnet" "public_subnet_2" {
   }
 }
 
+/*
 resource "aws_subnet" "private_subnet_1" {
   vpc_id            = aws_vpc.web_vpc.id
   cidr_block        = "10.0.3.0/24"
@@ -137,6 +272,7 @@ resource "aws_subnet" "private_subnet_2" {
     environment = var.environment
   }
 }
+*/
 
 resource "aws_internet_gateway" "web_internet_gateway" {
   vpc_id = aws_vpc.web_vpc.id
@@ -159,7 +295,7 @@ resource "aws_default_route_table" "web_default_route_table" {
   }
 }
 
-
+/*
 // Create NAT Gateways, route tables and attach them to the PUBLIC subnet
 resource "aws_eip" "web_eip_public_subnet_1_natgw" {
   vpc = true
@@ -226,7 +362,7 @@ resource "aws_route_table_association" "mwa_ra_private_subnet_2" {
   subnet_id      = aws_subnet.private_subnet_2.id
   route_table_id = aws_route_table.web_private_subnet_2_route_table.id
 }
-
+*/
 
 # create the public key to connect to the ec2 instance
 resource "aws_key_pair" "ec2_public_key" {
@@ -234,6 +370,7 @@ resource "aws_key_pair" "ec2_public_key" {
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9E7yCIHpNKaHXtzxFnKJPT+gtyXAnprq/pCfs/fPW+sXwAAFVsIt0rzEghkSshR8lUcyGJTafOFLPIAfSHirp2JdREtWa3CijokSHzaoSk2PrB8KzrX07l998lYGVgKzsOb8TmeLAeHR/vgwQ0r7r/17JOIRLrYcaghkrpwDt/GPVCxZa8TjQWiyX9Aw+QRP4IX6N65py5y2dsh7+GOS/rIlueRDx7YVEhzA8OvhiN2v0EW8QtdHhWU6uEOpuPF16sXYTImb73BnsjE+CZWrkjAlIp35hbuw1E2jZWAWnA10txc5VadjemPsPysCBMkEBYDl/DAdFQ0YlB5G3DKBD todd@tk"
 }
 
+/*
 resource "aws_instance" "web_server" {
   ami                         = "ami-0947d2ba12ee1ff75"
   instance_type               = "t3.nano"
@@ -241,15 +378,15 @@ resource "aws_instance" "web_server" {
   iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
   subnet_id                   = aws_subnet.private_subnet_1.id
   private_ip                  = "10.0.3.10"
-  vpc_security_group_ids      = [aws_default_security_group.web_security_group.id]
+  vpc_security_group_ids      = [aws_security_group.private_security_group.id]
   associate_public_ip_address = false
   user_data                   = file("./modules/ec2/user_data.tmpl")
-  depends_on                  = [aws_nat_gateway.public_subnet_1_natgw]
+  depends_on                  = [aws_nat_gateway.public_subnet_1_natgw, aws_nat_gateway.public_subnet_2_natgw]
 
   tags = {
     environment = var.environment
   }
-}
+}*/
 
 resource "aws_instance" "public_server" {
   ami                         = "ami-0947d2ba12ee1ff75"
@@ -258,10 +395,10 @@ resource "aws_instance" "public_server" {
   iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
   subnet_id                   = aws_subnet.public_subnet_1.id
   private_ip                  = "10.0.1.10"
-  vpc_security_group_ids      = [aws_default_security_group.web_security_group.id]
+  vpc_security_group_ids      = [aws_security_group.public_security_group.id]
   associate_public_ip_address = true
   user_data                   = file("./modules/ec2/user_data.tmpl")
-  depends_on                  = [aws_nat_gateway.public_subnet_1_natgw]
+  #depends_on                  = [aws_nat_gateway.public_subnet_1_natgw, aws_nat_gateway.public_subnet_2_natgw]
 
   tags = {
     environment = var.environment
@@ -273,8 +410,9 @@ resource "aws_lb" "web_alb" {
   name               = "web-alb"
   internal           = false
   load_balancer_type = "application"
-  #security_groups            = [aws_security_group.lb_security_group.id]
-  subnets                    = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+  security_groups    = [aws_security_group.load_balancer_security_group.id]
+  #subnets                    = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+  subnets                    = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
   enable_deletion_protection = false
 
   access_logs {
@@ -321,6 +459,6 @@ resource "aws_lb_listener" "web_alb_front_end" {
 
 resource "aws_lb_target_group_attachment" "web_targets" {
   target_group_arn = aws_lb_target_group.web_alb_target_group.arn
-  target_id        = aws_instance.web_server.id
+  target_id        = aws_instance.public_server.id
   port             = 8000
 }
