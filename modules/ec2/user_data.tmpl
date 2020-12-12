@@ -5,6 +5,7 @@ wget https://inspector-agent.amazonaws.com/linux/latest/install
 bash install
 
 yum install -y python3.x86_64 python3-pip.noarch
+yum update -y
 sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn"
 
 sudo -u ec2-user bash -c "/usr/bin/aws s3api get-object --bucket tdk-awssec-s3-web.io-dev --key main.py /home/ec2-user/main.py"
