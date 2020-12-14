@@ -13,24 +13,25 @@ resource "aws_network_acl" "public_subnet_nacl" {
   subnet_ids = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
 
   // inbound ssh
-  ingress {
+  /*ingress {
     protocol   = "tcp"
     rule_no    = 100
     action     = "allow"
     cidr_block = "108.16.31.89/32"
     from_port  = 22
     to_port    = 22
-  }
+  }*/
 
   // ssh access for AWS Instance Connect
-  ingress {
+  // not needed
+  /*ingress {
     protocol   = "tcp"
     rule_no    = 200
     action     = "allow"
     cidr_block = "18.206.107.24/29"
     from_port  = 22
     to_port    = 22
-  }
+  }*/
 
   // allow http traffic on listener port
   ingress {
@@ -136,12 +137,14 @@ resource "aws_security_group" "public_security_group" {
   vpc_id = aws_vpc.web_vpc.id
 
   // inbound ssh from AWS instance connect
+  /* not needed for AWS instance connect
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["108.16.31.89/32", "18.206.107.24/29"]
   }
+  */
 
   // inbound on instance listener port (direct access to instance)
   /*ingress {

@@ -1,3 +1,4 @@
+/* commented out for testing - the config works as-is
 resource "aws_wafv2_web_acl" "web_waf_acl" {
   name  = "web-acl-web_waf_acl-example"
   scope = "REGIONAL"
@@ -75,3 +76,4 @@ resource "aws_wafv2_ip_set" "web_ip_set" {
   ip_address_version = "IPV4"
   addresses          = ["108.16.31.89/32"]
 }
+*/
