@@ -54,6 +54,18 @@ resource "aws_iam_role_policy" "ssm_policy" {
                 "s3:GetObject"
             ],
             "Resource": ["${var.source_bucket_arn}/*"]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": [
+                "${aws_cloudwatch_log_stream.web_log_stream.arn}"
+            ]
         }
     ]
 }

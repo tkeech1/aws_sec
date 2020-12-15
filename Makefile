@@ -39,6 +39,7 @@ clean:
 
 upload-s3:
 	aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	aws s3 cp ./modules/ec2/awslogs.conf s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 
 web: apply-s3 upload-s3 apply-ec2
 

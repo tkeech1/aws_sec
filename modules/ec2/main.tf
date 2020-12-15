@@ -33,10 +33,10 @@ resource "aws_network_acl" "public_subnet_nacl" {
     to_port    = 22
   }*/
 
-  // allow http traffic on listener port
+  // allow external http traffic inbound on the listener port
   ingress {
     protocol   = "tcp"
-    rule_no    = 300
+    rule_no    = 100
     action     = "allow"
     cidr_block = "108.16.31.89/32"
     from_port  = 80
@@ -63,25 +63,57 @@ resource "aws_network_acl" "public_subnet_nacl" {
     to_port    = 443
   }*/
 
-  # allow https return traffic from https://inspector-agent.amazonaws.com/linux/latest/install
+  # allow http/https return traffic from the instance
+  # https://inspector-agent.amazonaws.com/linux/latest/install
   # https://s3.dualstack.us-east-1.amazonaws.com/aws-agent.us-east-1/linux/latest/inspector.gpg
   ingress {
     protocol   = "tcp"
-    rule_no    = 600
+    rule_no    = 200
     action     = "allow"
     cidr_block = "0.0.0.0/0"
     from_port  = 1024
     to_port    = 65535
   }
 
-  egress {
+  /*egress {
     protocol   = -1
     rule_no    = 100
     action     = "allow"
     cidr_block = "0.0.0.0/0"
     from_port  = 0
     to_port    = 0
+  }*/
+
+  // allow outbound http so the instance can download and install packages
+  egress {
+    protocol   = "tcp"
+    rule_no    = 300
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 80
+    to_port    = 80
   }
+
+  // allow outbound https so the instance can download and install packages
+  egress {
+    protocol   = "tcp"
+    rule_no    = 400
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
+  }
+
+  // allow web responses outbound
+  egress {
+    protocol   = "tcp"
+    rule_no    = 500
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+
 }
 
 /*
@@ -155,7 +187,7 @@ resource "aws_security_group" "public_security_group" {
     cidr_blocks = ["10.0.0.0/16"]
   }*/
 
-  // access to the listener port from the load balancer
+  // allow access to the instnace listener port from the load balancer
   ingress {
     description = "Web traffic"
     from_port   = 8000
@@ -164,10 +196,29 @@ resource "aws_security_group" "public_security_group" {
     cidr_blocks = ["10.0.0.0/16"]
   }
 
+  /*
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }*/
+
+  // allow outbound http so the instance can download and install packages
+  egress {
+    description = "Web traffic"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  // allow outbound https so the instance can download and install packages
+  egress {
+    description = "Web traffic"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -180,7 +231,7 @@ resource "aws_security_group" "public_security_group" {
 resource "aws_security_group" "load_balancer_security_group" {
   vpc_id = aws_vpc.web_vpc.id
 
-  // inbound on instance listener port
+  // allow inbound to the load balancer on the lb listener port
   ingress {
     description = "Web traffic"
     from_port   = 80
@@ -189,10 +240,11 @@ resource "aws_security_group" "load_balancer_security_group" {
     cidr_blocks = ["108.16.31.89/32"]
   }
 
+  // allow outbout instance web traffic (responses to http traffic)
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 1024
+    to_port     = 65535
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -464,4 +516,19 @@ resource "aws_lb_target_group_attachment" "web_targets" {
   target_group_arn = aws_lb_target_group.web_alb_target_group.arn
   target_id        = aws_instance.public_server.id
   port             = 8000
+}
+
+resource "aws_cloudwatch_log_group" "web_log_group" {
+  name              = "web_log_group"
+  retention_in_days = 1
+  #kms_key_id = 
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_log_stream" "web_log_stream" {
+  name           = "web_log_stream"
+  log_group_name = aws_cloudwatch_log_group.web_log_group.name
 }
