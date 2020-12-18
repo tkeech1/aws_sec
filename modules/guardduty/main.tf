@@ -6,7 +6,7 @@ resource "aws_guardduty_detector" "primary_detector" {
   }
 }
 
-resource "aws_guardduty_filter" "MyFilter" {
+/*resource "aws_guardduty_filter" "MyFilter" {
   name        = "MyFilter"
   action      = "NOOP"
   detector_id = aws_guardduty_detector.primary_detector.id
@@ -23,4 +23,4 @@ resource "aws_guardduty_filter" "MyFilter" {
       greater_than_or_equal = "4"
     }
   }
-}
+}*/

@@ -48,3 +48,9 @@ module "ec2_webserver" {
   source      = "./modules/inspector"
   environment = var.environment
 }*/
+
+/* Create an amazon inspector to scan ec2 instances */
+module "securityhub" {
+  source      = "./modules/securityhub"
+  environment = var.environment
+}
