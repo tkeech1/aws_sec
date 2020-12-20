@@ -181,24 +181,10 @@ resource "aws_instance" "public_server" {
   vpc_security_group_ids      = [aws_security_group.public_security_group.id]
   associate_public_ip_address = true
   user_data                   = file("./modules/ec2/user_data.tmpl")
-  #depends_on                  = [aws_nat_gateway.public_subnet_1_natgw, aws_nat_gateway.public_subnet_2_natgw]
+  # create the web server after creating the cloudwatch event rule so a notification email is sent
+  depends_on = [aws_cloudwatch_event_rule.web_running_event]
 
   tags = {
     environment = var.environment
   }
-}
-
-resource "aws_cloudwatch_log_group" "web_log_group" {
-  name              = "web_log_group"
-  retention_in_days = 1
-  #kms_key_id = 
-
-  tags = {
-    environment = var.environment
-  }
-}
-
-resource "aws_cloudwatch_log_stream" "web_log_stream" {
-  name           = "web_log_stream"
-  log_group_name = aws_cloudwatch_log_group.web_log_group.name
 }
