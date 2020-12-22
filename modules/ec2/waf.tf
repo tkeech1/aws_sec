@@ -74,6 +74,6 @@ resource "aws_wafv2_ip_set" "web_ip_set" {
   name               = "web-ip-set"
   scope              = "REGIONAL"
   ip_address_version = "IPV4"
-  addresses          = ["108.16.31.89/32"]
+  addresses          = [var.ip_cidr]
 }
 */

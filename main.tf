@@ -40,14 +40,15 @@ module "ec2_webserver" {
   source_bucket_arn = module.s3.source_bucket_arn
   log_bucket_name   = module.s3.logs_bucket_name
   environment       = var.environment
+  ip_cidr           = var.ip_cidr
   #depends_on        = [module.s3]
 }
 
 /* Create an amazon inspector to scan ec2 instances */
-/*module "inspector" {
+module "inspector" {
   source      = "./modules/inspector"
   environment = var.environment
-}*/
+}
 
 /* Create an amazon inspector to scan ec2 instances */
 module "securityhub" {

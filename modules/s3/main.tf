@@ -38,6 +38,7 @@ resource "aws_s3_bucket" "s3_alb_logs" {
       }
     }
   }
+
   tags = {
     environment = var.environment
   }
@@ -46,6 +47,7 @@ resource "aws_s3_bucket" "s3_alb_logs" {
 # block all public access to the bucket
 resource "aws_s3_bucket_public_access_block" "s3_alb_logs_bucket_policy" {
   bucket                  = aws_s3_bucket.s3_alb_logs.id
+  depends_on              = [aws_s3_bucket.s3_alb_logs]
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true

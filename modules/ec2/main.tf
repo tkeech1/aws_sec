@@ -17,7 +17,7 @@ resource "aws_network_acl" "public_subnet_nacl" {
     protocol   = "tcp"
     rule_no    = 100
     action     = "allow"
-    cidr_block = "108.16.31.89/32"
+    cidr_block = var.ip_cidr
     from_port  = 80
     to_port    = 80
   }
@@ -71,7 +71,7 @@ resource "aws_security_group" "public_security_group" {
   vpc_id = aws_vpc.web_vpc.id
 
   ingress {
-    description = "allow access to the instnace listener port from the load balancer"
+    description = "allow access to the instance listener port from the load balancer"
     from_port   = 8000
     to_port     = 8000
     protocol    = "tcp"
@@ -90,31 +90,6 @@ resource "aws_security_group" "public_security_group" {
     description = "allow outbound https so the instance can download and install packages"
     from_port   = 443
     to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    environment = var.environment
-  }
-}
-
-// load balancer security group
-resource "aws_security_group" "load_balancer_security_group" {
-  vpc_id = aws_vpc.web_vpc.id
-
-  ingress {
-    description = "allow inbound http to the load balancer on the lb listener port"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["108.16.31.89/32"]
-  }
-
-  egress {
-    description = "allow outbout instance web traffic (responses to http traffic)"
-    from_port   = 1024
-    to_port     = 65535
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -165,16 +140,9 @@ resource "aws_default_route_table" "web_default_route_table" {
   }
 }
 
-# create the public key to connect to the ec2 instance
-resource "aws_key_pair" "ec2_public_key" {
-  key_name   = "todd@tk"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9E7yCIHpNKaHXtzxFnKJPT+gtyXAnprq/pCfs/fPW+sXwAAFVsIt0rzEghkSshR8lUcyGJTafOFLPIAfSHirp2JdREtWa3CijokSHzaoSk2PrB8KzrX07l998lYGVgKzsOb8TmeLAeHR/vgwQ0r7r/17JOIRLrYcaghkrpwDt/GPVCxZa8TjQWiyX9Aw+QRP4IX6N65py5y2dsh7+GOS/rIlueRDx7YVEhzA8OvhiN2v0EW8QtdHhWU6uEOpuPF16sXYTImb73BnsjE+CZWrkjAlIp35hbuw1E2jZWAWnA10txc5VadjemPsPysCBMkEBYDl/DAdFQ0YlB5G3DKBD todd@tk"
-}
-
 resource "aws_instance" "public_server" {
   ami                         = "ami-0947d2ba12ee1ff75"
   instance_type               = "t3.nano"
-  key_name                    = aws_key_pair.ec2_public_key.key_name
   iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
   subnet_id                   = aws_subnet.public_subnet_1.id
   private_ip                  = "10.0.1.10"
@@ -188,3 +156,22 @@ resource "aws_instance" "public_server" {
     environment = var.environment
   }
 }
+
+/*
+resource "aws_instance" "public_server_2" {
+  ami                         = "ami-0947d2ba12ee1ff75"
+  instance_type               = "t3.nano"
+  iam_instance_profile        = aws_iam_instance_profile.web_ec2_instance_profile.name
+  subnet_id                   = aws_subnet.public_subnet_2.id
+  private_ip                  = "10.0.2.10"
+  vpc_security_group_ids      = [aws_security_group.public_security_group.id]
+  associate_public_ip_address = true
+  user_data                   = file("./modules/ec2/user_data.tmpl")
+  # create the web server after creating the cloudwatch event rule so a notification email is sent
+  depends_on = [aws_cloudwatch_event_rule.web_running_event]
+
+  tags = {
+    environment = var.environment
+  }
+}
+*/

@@ -7,3 +7,6 @@ variable "source_bucket_arn" {
 variable "log_bucket_name" {
   type = string
 }
+variable "ip_cidr" {
+  type = string
+}
