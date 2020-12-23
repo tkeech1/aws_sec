@@ -23,18 +23,6 @@ apply:
 plan:
 	terraform init; terraform fmt; terraform plan -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
 
-apply-ec2:
-	terraform init; terraform fmt; terraform apply -target=module.ec2_webserver -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
-
-plan-ec2:
-	terraform init; terraform fmt; terraform plan -target=module.ec2_webserver -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
-
-apply-inspector:
-	terraform init; terraform fmt; terraform apply -target=module.inspector -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
-
-plan-inspector:
-	terraform init; terraform fmt; terraform plan -target=module.inspector -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
-
 apply-s3:
 	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
 
@@ -48,5 +36,5 @@ upload-s3:
 	aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 	aws s3 cp ./modules/ec2/awslogs.conf s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 
-web: apply-s3 upload-s3 apply-ec2 apply-inspector
+web: apply-s3 upload-s3 apply
 

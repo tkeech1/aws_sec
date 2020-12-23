@@ -1,6 +1,6 @@
 
 resource "aws_guardduty_detector" "primary_detector" {
-  enable = false
+  enable = true
   tags = {
     environment = var.environment
   }

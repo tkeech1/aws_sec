@@ -10,7 +10,7 @@ resource "aws_inspector_assessment_target" "web_target" {
 }
 
 resource "aws_inspector_assessment_template" "web_assessment_template" {
-  name       = "example"
+  name       = "web-assessment"
   target_arn = aws_inspector_assessment_target.web_target.arn
   duration   = 3600
 

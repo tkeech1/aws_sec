@@ -9,6 +9,16 @@ resource "aws_cloudwatch_log_group" "web_log_group" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "flow_log_group" {
+  name              = "flow_log_group"
+  retention_in_days = 1
+  #kms_key_id = 
+
+  tags = {
+    environment = var.environment
+  }
+}
+
 resource "aws_cloudwatch_log_stream" "web_log_stream" {
   name           = "web_log_stream"
   log_group_name = aws_cloudwatch_log_group.web_log_group.name

@@ -20,10 +20,10 @@ provider "aws" {
 }
 
 /* Guard Duty */
-/*module "guard_duty" {
+module "guard_duty" {
   source      = "./modules/guardduty"
   environment = var.environment
-}*/
+}
 
 /* Create an s3 bucket */
 module "s3" {
@@ -50,8 +50,15 @@ module "inspector" {
   environment = var.environment
 }
 
-/* Create an amazon inspector to scan ec2 instances */
+/* Create an amazon security hub */
 module "securityhub" {
   source      = "./modules/securityhub"
   environment = var.environment
+}
+
+/* enable cloutrail */
+module "cloudtrail" {
+  source                 = "./modules/cloudtrail"
+  environment            = var.environment
+  cloudtrail_bucket_name = var.s3_cloudtrail_bucket_name
 }

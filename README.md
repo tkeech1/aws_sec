@@ -37,4 +37,6 @@ TODO:
 * Secrets - https://blog.gruntwork.io/a-comprehensive-guide-to-managing-secrets-in-your-terraform-code-1d586955ace1
 * Terratest
 * Credentials
-* Cron for updates
+* Private subnet
+* VPC flow logs
+* seperate NACL and SGs

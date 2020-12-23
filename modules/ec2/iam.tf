@@ -97,3 +97,48 @@ resource "aws_iam_instance_profile" "web_ec2_instance_profile" {
   name = "web_ec2_instance_profile"
   role = aws_iam_role.web_ec2_role.name
 }
+
+
+resource "aws_iam_role" "web_vpc_flow_log_role" {
+  name = "vpc-flow-log-role"
+
+  assume_role_policy = <<-EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "vpc-flow-logs.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+  EOF
+}
+
+resource "aws_iam_role_policy" "web_vpc_flow_log_role_policy" {
+  name = "vpc-flow-log-role-policy"
+  role = aws_iam_role.web_vpc_flow_log_role.id
+
+  policy = <<-EOF
+{
+    "Statement": [
+        {
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DescribeLogGroups",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+  EOF
+}
+

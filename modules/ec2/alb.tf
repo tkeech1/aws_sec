@@ -74,14 +74,8 @@ resource "aws_lb_listener" "web_alb_front_end" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "web_targets_ps" {
+resource "aws_lb_target_group_attachment" "web_targets_ps2" {
   target_group_arn = aws_lb_target_group.web_alb_target_group.arn
-  target_id        = aws_instance.public_server.id
+  target_id        = aws_instance.private_server_1.id
   port             = 8000
 }
-
-/*resource "aws_lb_target_group_attachment" "web_targets_ps2" {
-  target_group_arn = aws_lb_target_group.web_alb_target_group.arn
-  target_id        = aws_instance.public_server_2.id
-  port             = 8000
-}*/
