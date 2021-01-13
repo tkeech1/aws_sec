@@ -29,7 +29,7 @@ make destroy
 **4) Remove backend:**
   
 
-**The following environment variables```
+```
 make destroy-backend
 ```
 
@@ -37,6 +37,7 @@ TODO:
 * Secrets - https://blog.gruntwork.io/a-comprehensive-guide-to-managing-secrets-in-your-terraform-code-1d586955ace1
 * Terratest
 * Credentials
-* Private subnet
-* VPC flow logs
-* seperate NACL and SGs
+* SNS Topic
+* VPC Endpoint for S3
+* Certs
+* CloudFront

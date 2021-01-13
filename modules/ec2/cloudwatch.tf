@@ -1,4 +1,6 @@
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_cloudwatch_log_group" "web_log_group" {
   name              = "web_log_group"
   retention_in_days = 1
@@ -48,5 +50,5 @@ EOF
 resource "aws_cloudwatch_event_target" "web_running_event_target" {
   target_id = "web-running-event-target"
   rule      = aws_cloudwatch_event_rule.web_running_event.name
-  arn       = "arn:aws:sns:us-east-1:224809215835:NotifyMe"
+  arn       = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:NotifyMe"
 }
