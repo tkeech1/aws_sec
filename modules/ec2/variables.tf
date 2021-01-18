@@ -10,3 +10,6 @@ variable "log_bucket_name" {
 variable "ip_cidr" {
   type = string
 }
+variable "sse_algorithm" {
+  type = string
+}

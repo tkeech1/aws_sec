@@ -147,13 +147,14 @@ resource "aws_network_acl" "private_subnet_nacl" {
 
 
 // public security group
+/*
 resource "aws_security_group" "public_security_group" {
   vpc_id = aws_vpc.web_vpc.id
 
   ingress {
     description = "allow access to the instance listener port from the load balancer"
-    from_port   = 8000
-    to_port     = 8000
+    from_port   = 8501
+    to_port     = 8501
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
   }
@@ -186,6 +187,7 @@ resource "aws_security_group" "public_security_group" {
     environment = var.environment
   }
 }
+*/
 
 // private security group
 resource "aws_security_group" "private_security_group" {
@@ -193,8 +195,8 @@ resource "aws_security_group" "private_security_group" {
 
   ingress {
     description = "allow access to the instance listener port from the load balancer"
-    from_port   = 8000
-    to_port     = 8000
+    from_port   = 8501
+    to_port     = 8501
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
   }

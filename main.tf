@@ -20,16 +20,15 @@ provider "aws" {
 }
 
 /* Guard Duty */
-module "guard_duty" {
+/*module "guard_duty" {
   source      = "./modules/guardduty"
   environment = var.environment
-}
+}*/
 
 /* Create an s3 bucket */
 module "s3" {
   source             = "./modules/s3"
   source_bucket_name = var.s3_source_bucket_name
-  logs_bucket_name   = var.s3_logs_bucket_name
   environment        = var.environment
   sse_algorithm      = var.sse_algorithm
 }
@@ -38,27 +37,28 @@ module "s3" {
 module "ec2_webserver" {
   source            = "./modules/ec2"
   source_bucket_arn = module.s3.source_bucket_arn
-  log_bucket_name   = module.s3.logs_bucket_name
+  log_bucket_name   = var.s3_logs_bucket_name
+  sse_algorithm     = var.sse_algorithm
   environment       = var.environment
   ip_cidr           = var.ip_cidr
   #depends_on        = [module.s3]
 }
 
 /* Create an amazon inspector to scan ec2 instances */
-module "inspector" {
+/*module "inspector" {
   source      = "./modules/inspector"
   environment = var.environment
-}
+}*/
 
 /* Create an amazon security hub */
-module "securityhub" {
+/*module "securityhub" {
   source      = "./modules/securityhub"
   environment = var.environment
-}
+}*/
 
 /* enable cloutrail */
-module "cloudtrail" {
+/*module "cloudtrail" {
   source                 = "./modules/cloudtrail"
   environment            = var.environment
   cloudtrail_bucket_name = var.s3_cloudtrail_bucket_name
-}
+}*/

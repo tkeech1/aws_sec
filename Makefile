@@ -23,6 +23,7 @@ apply:
 plan:
 	terraform init; terraform fmt; terraform plan -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
 
+# create the S3 buckets for source code and alb logs
 apply-s3:
 	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
 
@@ -34,6 +35,7 @@ clean:
 
 upload-s3:
 	aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	aws s3 cp ./modules/ec2/streamlit_app.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 	aws s3 cp ./modules/ec2/awslogs.conf s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 
 web: apply-s3 upload-s3 apply
