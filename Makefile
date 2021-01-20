@@ -40,3 +40,8 @@ upload-s3:
 
 web: apply-s3 upload-s3 apply
 
+# pretty cool one liner but it's not used. terraform can create self-signed certs. see acm module.
+#create-cert:
+	#openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 -subj "/C=US/ST=US/L=US/O=TK/CN=${ENVIRONMENT}" -keyout certs/${ENVIRONMENT}.key -out certs/${ENVIRONMENT}.cert
+
+

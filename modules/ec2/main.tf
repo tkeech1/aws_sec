@@ -22,6 +22,16 @@ resource "aws_network_acl" "public_subnet_nacl" {
     to_port    = 80
   }
 
+  // allow external http traffic inbound on the listener port
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 150
+    action     = "allow"
+    cidr_block = var.ip_cidr
+    from_port  = 443
+    to_port    = 443
+  }
+
   # allow http/https return traffic to the instance
   # https://inspector-agent.amazonaws.com/linux/latest/install
   # https://s3.dualstack.us-east-1.amazonaws.com/aws-agent.us-east-1/linux/latest/inspector.gpg

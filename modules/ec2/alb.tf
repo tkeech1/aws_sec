@@ -10,6 +10,14 @@ resource "aws_security_group" "load_balancer_security_group" {
     cidr_blocks = [var.ip_cidr]
   }
 
+  ingress {
+    description = "allow inbound https to the load balancer on the lb listener port"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.ip_cidr]
+  }
+
   egress {
     description = "allow outbout instance web traffic (responses to http traffic)"
     from_port   = 1024
@@ -73,6 +81,22 @@ resource "aws_lb_listener" "web_alb_front_end" {
     target_group_arn = aws_lb_target_group.web_alb_target_group.arn
   }
 }
+
+// create a network load balancer listener
+resource "aws_lb_listener" "web_alb_front_end_https" {
+  load_balancer_arn = aws_lb.web_alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = aws_iam_server_certificate.self_signed_cert.arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_alb_target_group.arn
+  }
+}
+
+
 
 resource "aws_lb_target_group_attachment" "web_targets_ps2" {
   target_group_arn = aws_lb_target_group.web_alb_target_group.arn
@@ -150,4 +174,37 @@ resource "aws_s3_bucket_policy" "alb_logging_policy" {
   ]
 }
 POLICY
+}
+
+resource "tls_private_key" "private_key" {
+  algorithm = "RSA"
+}
+
+resource "tls_self_signed_cert" "self_signed_cert" {
+  key_algorithm   = "RSA"
+  private_key_pem = tls_private_key.private_key.private_key_pem
+
+  subject {
+    common_name  = var.environment
+    organization = var.environment
+  }
+
+  validity_period_hours = 12
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+}
+
+resource "aws_iam_server_certificate" "self_signed_cert" {
+  name_prefix      = "bandit-cert"
+  certificate_body = tls_self_signed_cert.self_signed_cert.cert_pem
+  private_key      = tls_private_key.private_key.private_key_pem
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }
