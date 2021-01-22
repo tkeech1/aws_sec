@@ -4,12 +4,13 @@ AWS_SECRET_ACCESS_KEY?=AWS_SECRET_ACCESS_KEY
 AWS_REGION?=AWS_REGION
 AWS_ACCOUNT_ID?=AWS_ACCOUNT_ID
 IP_CIDR?=IP_CIDR
+EMAIL_ADDRESS?=EMAIL_ADDRESS
 ENVIRONMENT?=dev
 # use the env var
 ENVIRONMENT?=ENVIRONMENT
 
 test-env:
-	echo "environment is ${ENVIRONMENT}"
+	echo "environment is ${EMAIL_ADDRESS}"
 
 create-backend:
 	cd s3_state && terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}";
@@ -18,17 +19,17 @@ destroy-backend:
 	cd s3_state && terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}";
 
 apply:
-	terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
+	terraform init; terraform fmt; terraform apply -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 plan:
-	terraform init; terraform fmt; terraform plan -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
+	terraform init; terraform fmt; terraform plan -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 # create the S3 buckets for source code and alb logs
 apply-s3:
-	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
+	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 destroy:
-	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}";
+	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 clean:
 	rm -rf .terraform; rm -rf s3_state/.terraform; rm -rf s3_state/terraform.tfstate; rm -rf s3_state/terraform.tfstate.backup;

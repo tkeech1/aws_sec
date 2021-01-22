@@ -35,13 +35,25 @@ module "s3" {
 
 /* Create an ec2 server with ssh access */
 module "ec2_webserver" {
-  source            = "./modules/ec2"
-  source_bucket_arn = module.s3.source_bucket_arn
-  log_bucket_name   = var.s3_logs_bucket_name
-  sse_algorithm     = var.sse_algorithm
-  environment       = var.environment
-  ip_cidr           = var.ip_cidr
+  source                      = "./modules/ec2"
+  source_bucket_arn           = module.s3.source_bucket_arn
+  log_bucket_name             = var.s3_logs_bucket_name
+  sse_algorithm               = var.sse_algorithm
+  environment                 = var.environment
+  ip_cidr                     = var.ip_cidr
+  cognito_user_pool_arn       = module.cognito.cognito_user_pool_arn
+  cognito_user_pool_client_id = module.cognito.cognito_user_pool_client_id
+  cognito_domain              = module.cognito.cognito_domain
+
   #depends_on        = [module.s3]
+}
+
+/* Create an amazon inspector to scan ec2 instances */
+module "cognito" {
+  source       = "./modules/cognito"
+  environment  = var.environment
+  alb_dns_name = module.ec2_webserver.alb_dns_name
+  cognito_user = var.email_address
 }
 
 /* Create an amazon inspector to scan ec2 instances */

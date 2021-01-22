@@ -19,3 +19,6 @@ variable "s3_cloudtrail_bucket_name" {
 variable "ip_cidr" {
   type = string
 }
+variable "email_address" {
+  type = string
+}

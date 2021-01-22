@@ -13,3 +13,12 @@ variable "ip_cidr" {
 variable "sse_algorithm" {
   type = string
 }
+variable "cognito_user_pool_arn" {
+  type = string
+}
+variable "cognito_user_pool_client_id" {
+  type = string
+}
+variable "cognito_domain" {
+  type = string
+}
