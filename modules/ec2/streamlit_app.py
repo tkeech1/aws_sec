@@ -7,6 +7,10 @@ from datetime import datetime
 import asyncio
 import websockets
 from websockets import ConnectionClosedOK
+import jwt
+import requests
+import base64
+import json
 
 st.set_page_config(layout="wide")
 
@@ -22,6 +26,52 @@ st.markdown(hide_menu_style, unsafe_allow_html=True)
 # end hack to hide hamburger menu
 
 st.title("Hello")
+
+try:
+    import streamlit.ReportThread as ReportThread
+    from streamlit.server.Server import Server
+except Exception:
+    # Streamlit >= 0.65.0
+    import streamlit.report_thread as ReportThread
+    from streamlit.server.server import Server
+
+
+def get_headers():
+    # Hack to get the session object from Streamlit.
+
+    current_server = Server.get_current()
+    if hasattr(current_server, "_session_infos"):
+        # Streamlit < 0.56
+        session_infos = Server.get_current()._session_infos.values()
+    else:
+        session_infos = Server.get_current()._session_info_by_id.values()
+
+    # Multiple Session Objects?
+    for session_info in session_infos:
+         return session_info.ws.request.headers["X-Amzn-Oidc-Data"]
+    #    headers = session_info.ws.request.headers
+    #    st.write(headers["X-Amzn-Oidc-Data"])
+    #    st.write(headers)
+
+encoded_jwt = get_headers()
+jwt_headers = encoded_jwt.split('.')[0]
+decoded_jwt_headers = base64.b64decode(jwt_headers)
+decoded_jwt_headers = decoded_jwt_headers.decode("utf-8")
+decoded_json = json.loads(decoded_jwt_headers)
+st.write(decoded_json)
+kid = decoded_json['kid']
+
+# Step 2: Get the public key from regional endpoint
+url = 'https://public-keys.auth.elb.us-east-1.amazonaws.com/' + kid
+req = requests.get(url)
+pub_key = req.text
+
+# Step 3: Get the payload
+payload = jwt.decode(encoded_jwt, pub_key, algorithms=['ES256'])
+st.write(payload)
+
+
+
 st.subheader("Get")
 
 
@@ -67,3 +117,21 @@ if submit:
 
 # asyncio.run(ws(test))
 # asyncio.get_event_loop().run_until_complete(hello(test))
+
+def get_headers():
+    # Hack to get the session object from Streamlit.
+
+    current_server = Server.get_current()
+    if hasattr(current_server, '_session_infos'):
+        # Streamlit < 0.56
+        session_infos = Server.get_current()._session_infos.values()
+    else:
+        session_infos = Server.get_current()._session_info_by_id.values()
+
+    # Multiple Session Objects?
+    for session_info in session_infos:
+        headers = session_info.ws.request.headers
+        st.write(headers)
+#    return headers
+
+get_headers()

@@ -15,7 +15,7 @@ systemctl start awslogsd
 systemctl enable awslogsd.service
 
 # install app dependencies
-sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn streamlit httpx websockets"
+sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn streamlit httpx websockets pyjwt"
 
 # download application files from s3
 sudo -u ec2-user bash -c "/usr/bin/aws s3api get-object --bucket tdk-awssec-s3-web.io-dev --key main.py /home/ec2-user/main.py"
