@@ -33,6 +33,12 @@ module "s3" {
   sse_algorithm      = var.sse_algorithm
 }
 
+// create an ecr registry
+/*module "mwa_ecr" {
+  source      = "./modules/ecr"
+  environment = "mwa"
+}*/
+
 /* Create an ec2 server with ssh access */
 module "ec2_webserver" {
   source                      = "./modules/ec2"
@@ -44,9 +50,19 @@ module "ec2_webserver" {
   cognito_user_pool_arn       = module.cognito.cognito_user_pool_arn
   cognito_user_pool_client_id = module.cognito.cognito_user_pool_client_id
   cognito_domain              = module.cognito.cognito_domain
-
   #depends_on        = [module.s3]
 }
+
+// create the ecs cluster
+/*module "mwa_ecs" {
+  source                = "./modules/ecs"
+  ecr_image_tag         = "${module.mwa_ecr.ecr_repository_url}:latest"
+  security_group_id     = module.mwa.mwa_security_group_id
+  private_subnet_one_id = module.mwa.mwa_private_subnet_one_id
+  private_subnet_two_id = module.mwa.mwa_private_subnet_two_id
+  target_group_arn      = module.mwa.mwa_target_group_arn
+  environment           = "mwa"
+}*/
 
 /* Create an amazon inspector to scan ec2 instances */
 module "cognito" {
