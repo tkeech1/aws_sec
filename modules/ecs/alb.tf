@@ -1,6 +1,6 @@
 // load balancer security group
 resource "aws_security_group" "load_balancer_security_group" {
-  vpc_id = aws_vpc.web_vpc.id
+  vpc_id = var.vpc_id
 
   ingress {
     description = "allow inbound http to the load balancer on the lb listener port"
@@ -40,12 +40,12 @@ resource "aws_security_group" "load_balancer_security_group" {
 }
 
 // create an application load balancer
-resource "aws_lb" "web_alb" {
-  name                       = "web-alb"
+resource "aws_lb" "ecs_alb" {
+  name                       = "ecs-alb"
   internal                   = false
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.load_balancer_security_group.id]
-  subnets                    = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
+  subnets                    = [var.public_subnet_1_id, var.public_subnet_2_id]
   enable_deletion_protection = false
 
   access_logs {
@@ -59,16 +59,16 @@ resource "aws_lb" "web_alb" {
 }
 
 // create a load balancer target group
-resource "aws_lb_target_group" "web_alb_target_group" {
-  name        = "web-alb-target-group"
-  port        = 8501
+resource "aws_lb_target_group" "ecs_alb_target_group" {
+  name        = "ecs-alb-target-group"
+  port        = 8000
   protocol    = "HTTP"
-  target_type = "instance"
-  vpc_id      = aws_vpc.web_vpc.id
+  target_type = "ip"
+  vpc_id      = var.vpc_id
   health_check {
     interval            = 10
     path                = "/"
-    port                = 8501
+    port                = 8000
     protocol            = "HTTP"
     healthy_threshold   = 3
     unhealthy_threshold = 3
@@ -79,8 +79,8 @@ resource "aws_lb_target_group" "web_alb_target_group" {
 }
 
 // create a network load balancer listener
-resource "aws_lb_listener" "web_alb_front_end" {
-  load_balancer_arn = aws_lb.web_alb.arn
+resource "aws_lb_listener" "ecs_alb_front_end" {
+  load_balancer_arn = aws_lb.ecs_alb.arn
   port              = "80"
   protocol          = "HTTP"
 
@@ -96,8 +96,8 @@ resource "aws_lb_listener" "web_alb_front_end" {
 }
 
 // create a network load balancer listener
-resource "aws_lb_listener" "web_alb_front_end_https" {
-  load_balancer_arn = aws_lb.web_alb.arn
+resource "aws_lb_listener" "ecs_alb_front_end_https" {
+  load_balancer_arn = aws_lb.ecs_alb.arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
@@ -115,14 +115,8 @@ resource "aws_lb_listener" "web_alb_front_end_https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.web_alb_target_group.arn
+    target_group_arn = aws_lb_target_group.ecs_alb_target_group.arn
   }
-}
-
-resource "aws_lb_target_group_attachment" "web_targets_ps2" {
-  target_group_arn = aws_lb_target_group.web_alb_target_group.arn
-  target_id        = aws_instance.private_server_1.id
-  port             = 8501
 }
 
 # create a bucket for ALB logs

@@ -1,24 +1,46 @@
 variable "environment" {
   type = string
 }
-
+variable "ip_cidr" {
+  type = string
+}
 variable "ecr_image_tag" {
   type = string
 }
 
-variable "security_group_id" {
+variable "vpc_id" {
   type = string
 }
 
-variable "private_subnet_one_id" {
+variable "private_subnet_1_id" {
   type = string
 }
 
-variable "private_subnet_two_id" {
+variable "private_subnet_2_id" {
   type = string
 }
 
-variable "target_group_arn" {
+variable "public_subnet_1_id" {
   type = string
 }
 
+variable "public_subnet_2_id" {
+  type = string
+}
+
+variable "log_bucket_name" {
+  type = string
+}
+variable "sse_algorithm" {
+  type = string
+}
+
+variable "cognito_user_pool_arn" {
+  type = string
+}
+variable "cognito_user_pool_client_id" {
+  type = string
+}
+variable "cognito_domain" {
+  type = string
+}

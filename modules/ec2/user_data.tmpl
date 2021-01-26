@@ -15,12 +15,13 @@ systemctl start awslogsd
 systemctl enable awslogsd.service
 
 # install app dependencies
-sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn streamlit httpx websockets pyjwt cryptography"
+#sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn streamlit httpx websockets pyjwt cryptography"
+sudo -u ec2-user bash -c "pip3 install --user streamlit httpx websockets pyjwt cryptography"
 
 # download application files from s3
-sudo -u ec2-user bash -c "/usr/bin/aws s3api get-object --bucket tdk-awssec-s3-web.io-dev --key main.py /home/ec2-user/main.py"
+#sudo -u ec2-user bash -c "/usr/bin/aws s3api get-object --bucket tdk-awssec-s3-web.io-dev --key main.py /home/ec2-user/main.py"
 sudo -u ec2-user bash -c "/usr/bin/aws s3api get-object --bucket tdk-awssec-s3-web.io-dev --key streamlit_app.py /home/ec2-user/streamlit_app.py"
 
 # start the apps
-sudo -u ec2-user bash -c "cd /home/ec2-user && ~/.local/bin/uvicorn main:app --reload --host 0.0.0.0 &"
+#sudo -u ec2-user bash -c "cd /home/ec2-user && ~/.local/bin/uvicorn main:app --reload --host 0.0.0.0 &"
 sudo -u ec2-user bash -c "cd /home/ec2-user && ~/.local/bin/streamlit run streamlit_app.py &"

@@ -34,15 +34,27 @@ module "s3" {
 }
 
 // create an ecr registry
-/*module "mwa_ecr" {
+module "ecr" {
   source      = "./modules/ecr"
-  environment = "mwa"
-}*/
+  environment = var.environment
+}
+
+/* Create an ec2 server with ssh access */
+module "vpc" {
+  source      = "./modules/vpc"
+  environment = var.environment
+  ip_cidr     = var.ip_cidr
+}
 
 /* Create an ec2 server with ssh access */
 module "ec2_webserver" {
   source                      = "./modules/ec2"
   source_bucket_arn           = module.s3.source_bucket_arn
+  vpc_id                      = module.vpc.vpc_id
+  private_subnet_1_id         = module.vpc.private_subnet_1_id
+  private_subnet_2_id         = module.vpc.private_subnet_2_id
+  public_subnet_1_id          = module.vpc.public_subnet_1_id
+  public_subnet_2_id          = module.vpc.public_subnet_2_id
   log_bucket_name             = var.s3_logs_bucket_name
   sse_algorithm               = var.sse_algorithm
   environment                 = var.environment
@@ -50,26 +62,34 @@ module "ec2_webserver" {
   cognito_user_pool_arn       = module.cognito.cognito_user_pool_arn
   cognito_user_pool_client_id = module.cognito.cognito_user_pool_client_id
   cognito_domain              = module.cognito.cognito_domain
-  #depends_on        = [module.s3]
+  depends_on                  = [module.s3, module.vpc]
 }
 
 // create the ecs cluster
-/*module "mwa_ecs" {
-  source                = "./modules/ecs"
-  ecr_image_tag         = "${module.mwa_ecr.ecr_repository_url}:latest"
-  security_group_id     = module.mwa.mwa_security_group_id
-  private_subnet_one_id = module.mwa.mwa_private_subnet_one_id
-  private_subnet_two_id = module.mwa.mwa_private_subnet_two_id
-  target_group_arn      = module.mwa.mwa_target_group_arn
-  environment           = "mwa"
-}*/
+module "ecs" {
+  source                      = "./modules/ecs"
+  vpc_id                      = module.vpc.vpc_id
+  ecr_image_tag               = "${module.ecr.ecr_repository_url}:latest"
+  private_subnet_1_id         = module.vpc.private_subnet_1_id
+  private_subnet_2_id         = module.vpc.private_subnet_2_id
+  public_subnet_1_id          = module.vpc.public_subnet_1_id
+  public_subnet_2_id          = module.vpc.public_subnet_2_id
+  log_bucket_name             = var.s3_logs_bucket_name
+  ip_cidr                     = var.ip_cidr
+  sse_algorithm               = var.sse_algorithm
+  cognito_user_pool_arn       = module.cognito.cognito_user_pool_arn
+  cognito_user_pool_client_id = module.cognito.cognito_user_pool_client_id
+  cognito_domain              = module.cognito.cognito_domain
+  environment                 = var.environment
+}
 
 /* Create an amazon inspector to scan ec2 instances */
 module "cognito" {
-  source       = "./modules/cognito"
-  environment  = var.environment
-  alb_dns_name = module.ec2_webserver.alb_dns_name
-  cognito_user = var.email_address
+  source           = "./modules/cognito"
+  environment      = var.environment
+  alb_dns_name     = module.ec2_webserver.alb_dns_name
+  alb_ecs_dns_name = module.ecs.alb_ecs_dns_name
+  cognito_user     = var.email_address
 }
 
 /* Create an amazon inspector to scan ec2 instances */

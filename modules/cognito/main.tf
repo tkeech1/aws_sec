@@ -17,7 +17,19 @@ resource "aws_cognito_user_pool_client" "user_pool_client" {
   allowed_oauth_scopes                 = ["openid"]
   supported_identity_providers         = ["COGNITO"]
   explicit_auth_flows                  = ["ALLOW_REFRESH_TOKEN_AUTH"]
-  callback_urls                        = ["https://${var.alb_dns_name}/oauth2/idpresponse"]
+  callback_urls                        = ["https://${var.alb_dns_name}/oauth2/idpresponse", "https://${var.alb_ecs_dns_name}/oauth2/idpresponse"]
+  user_pool_id                         = aws_cognito_user_pool.user_pool.id
+}
+
+resource "aws_cognito_user_pool_client" "ecs_user_pool_client" {
+  name                                 = "BanditECSUserPoolClient"
+  generate_secret                      = true
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_scopes                 = ["openid"]
+  supported_identity_providers         = ["COGNITO"]
+  explicit_auth_flows                  = ["ALLOW_REFRESH_TOKEN_AUTH"]
+  callback_urls                        = ["https://${var.alb_ecs_dns_name}/oauth2/idpresponse", "https://${var.alb_dns_name}/oauth2/idpresponse"]
   user_pool_id                         = aws_cognito_user_pool.user_pool.id
 }
 

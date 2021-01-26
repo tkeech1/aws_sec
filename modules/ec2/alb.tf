@@ -1,6 +1,6 @@
 // load balancer security group
 resource "aws_security_group" "load_balancer_security_group" {
-  vpc_id = aws_vpc.web_vpc.id
+  vpc_id = var.vpc_id
 
   ingress {
     description = "allow inbound http to the load balancer on the lb listener port"
@@ -45,7 +45,7 @@ resource "aws_lb" "web_alb" {
   internal                   = false
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.load_balancer_security_group.id]
-  subnets                    = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
+  subnets                    = [var.public_subnet_1_id, var.public_subnet_2_id]
   enable_deletion_protection = false
 
   access_logs {
@@ -64,7 +64,7 @@ resource "aws_lb_target_group" "web_alb_target_group" {
   port        = 8501
   protocol    = "HTTP"
   target_type = "instance"
-  vpc_id      = aws_vpc.web_vpc.id
+  vpc_id      = var.vpc_id
   health_check {
     interval            = 10
     path                = "/"

@@ -5,6 +5,31 @@ resource "aws_ecs_cluster" "bandit_cluster" {
   }
 }
 
+// private security group
+resource "aws_security_group" "private_security_group" {
+  vpc_id = var.vpc_id
+
+  ingress {
+    description = "allow access to the instance listener port from the load balancer"
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    description = "allow outbound https to pull container images"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    environment = var.environment
+  }
+}
+
 resource "aws_cloudwatch_log_group" "bandit_log_group" {
   name              = "bandit_log_group"
   retention_in_days = 1
@@ -40,15 +65,17 @@ resource "aws_ecs_service" "bandit_http_service" {
   desired_count                      = 1
 
   network_configuration {
-    subnets          = [var.private_subnet_one_id, var.private_subnet_two_id]
-    security_groups  = [var.security_group_id]
+    subnets          = [var.private_subnet_1_id, var.private_subnet_2_id]
+    security_groups  = [aws_security_group.private_security_group.id]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = var.target_group_arn
+    target_group_arn = aws_lb_target_group.ecs_alb_target_group.arn
     container_name   = "bandit-Service"
     container_port   = 8000
   }
+
+  depends_on = [aws_lb_target_group.ecs_alb_target_group, aws_lb.ecs_alb, aws_lb_listener.ecs_alb_front_end_https]
 
 }

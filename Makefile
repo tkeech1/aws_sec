@@ -24,22 +24,37 @@ apply:
 plan:
 	terraform init; terraform fmt; terraform plan -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
-# create the S3 buckets for source code and alb logs
-apply-s3:
-	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
-
 destroy:
 	terraform init; terraform destroy -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 clean:
 	rm -rf .terraform; rm -rf s3_state/.terraform; rm -rf s3_state/terraform.tfstate; rm -rf s3_state/terraform.tfstate.backup;
 
+# create the S3 buckets for source code and alb logs
+apply-s3:
+	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
+
+apply-ecr:
+	terraform init; terraform fmt; terraform apply -target=module.ecr -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
+
 upload-s3:
-	aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	#aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 	aws s3 cp ./modules/ec2/streamlit_app.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 	aws s3 cp ./modules/ec2/awslogs.conf s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 
-web: apply-s3 upload-s3 apply
+build-image:
+	cd code && docker build . -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/bandit_repo/service:latest
+
+authenticate-docker-ecr:
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
+
+push-image: authenticate-docker-ecr
+	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/bandit_repo/service:latest
+
+describe-image-repo:
+	aws ecr describe-images --repository-name bandit_repo/service
+
+web: apply-s3 apply-ecr upload-s3 build-image push-image apply
 
 # pretty cool one liner but it's not used. terraform can create self-signed certs. see acm module.
 #create-cert:
