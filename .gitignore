@@ -110,7 +110,6 @@ terraform.tfstate.backup
 *.zip
 
 data/
-code/
 modules_old/
 tmp*
 web_url*
