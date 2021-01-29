@@ -5,7 +5,7 @@
         "version": "0.1.0"
     },
     "securityDefinitions": {
-        "MysfitsUserPoolAuthorizer": {
+        "UserPoolAuthorizer": {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header",
@@ -32,7 +32,29 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "UserPoolAuthorizer": []
+                    }
+                ]
+            },
+            "x-amazon-apigateway-integration": {
+                "connectionType": "VPC_LINK",
+                "responses": {
+                    "default": {
+                        "statusCode": "200",
+                        "responseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
+                            "method.response.header.Access-Control-Allow-Methods": "'*'",
+                            "method.response.header.Access-Control-Allow-Origin": "'*'"
+                        }
+                    }
+                },
+                "connectionId": "${vpc_link_id}",
+                "httpMethod": "GET",
+                "type": "HTTP_PROXY",
+                "uri": "http://${alb_dns_name}/"
             }
         },
         "/streamlit": {
