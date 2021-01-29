@@ -38,12 +38,13 @@ apply-ecr:
 	terraform init; terraform fmt; terraform apply -target=module.ecr -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 upload-s3:
-	#aws s3 cp ./modules/ec2/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
-	aws s3 cp ./modules/ec2/streamlit_app.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	aws s3 cp ./code/main.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
+	#aws s3 cp ./code/streamlit_app.py s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 	aws s3 cp ./modules/ec2/awslogs.conf s3://tdk-awssec-s3-web.io-${ENVIRONMENT}/
 
 build-image:
-	cd code && docker build . -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/bandit_repo/service:latest
+	#cd code && docker build . -f Dockerfile_fastapi -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/bandit_repo/service:latest
+	cd code && docker build . -f Dockerfile_streamlit -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/bandit_repo/service:latest
 
 authenticate-docker-ecr:
 	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com

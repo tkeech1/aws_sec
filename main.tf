@@ -39,11 +39,20 @@ module "ecr" {
   environment = var.environment
 }
 
-/* Create an ec2 server with ssh access */
+/* Create an network infrastructure */
 module "vpc" {
   source      = "./modules/vpc"
   environment = var.environment
   ip_cidr     = var.ip_cidr
+}
+
+/* Create an amazon cognito */
+module "cognito" {
+  source           = "./modules/cognito"
+  environment      = var.environment
+  alb_dns_name     = module.ec2_webserver.alb_dns_name
+  alb_ecs_dns_name = module.ecs.alb_ecs_dns_name
+  cognito_user     = var.email_address
 }
 
 /* Create an ec2 server with ssh access */
@@ -83,14 +92,16 @@ module "ecs" {
   environment                 = var.environment
 }
 
-/* Create an amazon inspector to scan ec2 instances */
-module "cognito" {
-  source           = "./modules/cognito"
-  environment      = var.environment
-  alb_dns_name     = module.ec2_webserver.alb_dns_name
-  alb_ecs_dns_name = module.ecs.alb_ecs_dns_name
-  cognito_user     = var.email_address
-}
+/* Create api gateway */
+/*module "api_gateway" {
+  source      = "./modules/api_gateway"
+  vpc_id      = module.vpc.vpc_id
+  environment = var.environment
+  subnet_ids  = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
+  #alb_dns_name     = module.ec2_webserver.alb_dns_name
+  #alb_ecs_dns_name = module.ecs.alb_ecs_dns_name
+  #cognito_user     = var.email_address
+}*/
 
 /* Create an amazon inspector to scan ec2 instances */
 /*module "inspector" {

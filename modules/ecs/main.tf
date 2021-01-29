@@ -11,8 +11,8 @@ resource "aws_security_group" "private_security_group" {
 
   ingress {
     description = "allow access to the instance listener port from the load balancer"
-    from_port   = 8000
-    to_port     = 8000
+    from_port   = 8501
+    to_port     = 8501
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
   }
@@ -73,7 +73,7 @@ resource "aws_ecs_service" "bandit_http_service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.ecs_alb_target_group.arn
     container_name   = "bandit-Service"
-    container_port   = 8000
+    container_port   = 8501
   }
 
   depends_on = [aws_lb_target_group.ecs_alb_target_group, aws_lb.ecs_alb, aws_lb_listener.ecs_alb_front_end_https]

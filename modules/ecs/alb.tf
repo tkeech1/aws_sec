@@ -61,14 +61,14 @@ resource "aws_lb" "ecs_alb" {
 // create a load balancer target group
 resource "aws_lb_target_group" "ecs_alb_target_group" {
   name        = "ecs-alb-target-group"
-  port        = 8000
+  port        = 8501
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = var.vpc_id
   health_check {
     interval            = 10
     path                = "/"
-    port                = 8000
+    port                = 8501
     protocol            = "HTTP"
     healthy_threshold   = 3
     unhealthy_threshold = 3

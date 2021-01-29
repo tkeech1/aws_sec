@@ -61,14 +61,14 @@ resource "aws_lb" "web_alb" {
 // create a load balancer target group
 resource "aws_lb_target_group" "web_alb_target_group" {
   name        = "web-alb-target-group"
-  port        = 8501
+  port        = 8000
   protocol    = "HTTP"
   target_type = "instance"
   vpc_id      = var.vpc_id
   health_check {
     interval            = 10
     path                = "/"
-    port                = 8501
+    port                = 8000
     protocol            = "HTTP"
     healthy_threshold   = 3
     unhealthy_threshold = 3
@@ -122,7 +122,7 @@ resource "aws_lb_listener" "web_alb_front_end_https" {
 resource "aws_lb_target_group_attachment" "web_targets_ps2" {
   target_group_arn = aws_lb_target_group.web_alb_target_group.arn
   target_id        = aws_instance.private_server_1.id
-  port             = 8501
+  port             = 8000
 }
 
 # create a bucket for ALB logs
