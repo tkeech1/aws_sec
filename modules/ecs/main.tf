@@ -7,6 +7,7 @@ resource "aws_ecs_cluster" "bandit_cluster" {
 
 // private security group
 resource "aws_security_group" "private_security_group" {
+  name   = "ecs-service-security-group"
   vpc_id = var.vpc_id
 
   ingress {
@@ -60,9 +61,17 @@ resource "aws_ecs_service" "bandit_http_service" {
   cluster                            = aws_ecs_cluster.bandit_cluster.id
   task_definition                    = aws_ecs_task_definition.bandit_ecs_task_definition.arn
   launch_type                        = "FARGATE"
-  deployment_maximum_percent         = 100
-  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
   desired_count                      = 1
+
+  # You can utilize the generic Terraform resource lifecycle configuration block with ignore_changes 
+  # to create an ECS service with an initial count of running instances, then ignore any changes to
+  # that count caused externally (e.g. Application Autoscaling).
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
 
   network_configuration {
     subnets          = [var.private_subnet_1_id, var.private_subnet_2_id]

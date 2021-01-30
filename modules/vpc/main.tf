@@ -287,6 +287,7 @@ resource "aws_route_table_association" "web_ra_private_subnet_two" {
 
 // vpc endpoint security group
 resource "aws_security_group" "private_vpc_endpoint_security_group" {
+  name   = "ssm-vpc-endpoint-security-group"
   vpc_id = aws_vpc.web_vpc.id
 
   ingress {

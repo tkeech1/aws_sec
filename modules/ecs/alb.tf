@@ -1,5 +1,6 @@
 // load balancer security group
 resource "aws_security_group" "load_balancer_security_group" {
+  name   = "ecs-lb-security-group"
   vpc_id = var.vpc_id
 
   ingress {
@@ -66,12 +67,12 @@ resource "aws_lb_target_group" "ecs_alb_target_group" {
   target_type = "ip"
   vpc_id      = var.vpc_id
   health_check {
-    interval            = 10
+    interval            = 30
     path                = "/"
     port                = 8501
     protocol            = "HTTP"
     healthy_threshold   = 3
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
   }
   tags = {
     environment = var.environment

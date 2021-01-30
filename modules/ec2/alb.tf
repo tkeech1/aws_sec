@@ -1,5 +1,6 @@
 // load balancer security group
 resource "aws_security_group" "load_balancer_security_group" {
+  name   = "ec2-lb-security-group"
   vpc_id = var.vpc_id
 
   ingress {
@@ -7,7 +8,8 @@ resource "aws_security_group" "load_balancer_security_group" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [var.ip_cidr]
+    #cidr_blocks = [var.ip_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -15,7 +17,8 @@ resource "aws_security_group" "load_balancer_security_group" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [var.ip_cidr]
+    #cidr_blocks = [var.ip_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -103,7 +106,7 @@ resource "aws_lb_listener" "web_alb_front_end_https" {
   ssl_policy        = "ELBSecurityPolicy-2016-08"
   certificate_arn   = aws_iam_server_certificate.self_signed_cert.arn
 
-  default_action {
+  /*default_action {
     type = "authenticate-cognito"
 
     authenticate_cognito {
@@ -111,7 +114,7 @@ resource "aws_lb_listener" "web_alb_front_end_https" {
       user_pool_client_id = var.cognito_user_pool_client_id
       user_pool_domain    = var.cognito_domain
     }
-  }
+  }*/
 
   default_action {
     type             = "forward"

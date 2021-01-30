@@ -1,5 +1,6 @@
 // private security group
 resource "aws_security_group" "private_security_group" {
+  name   = "ec2-web-server-security-group"
   vpc_id = var.vpc_id
 
   ingress {
