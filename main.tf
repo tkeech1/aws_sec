@@ -93,7 +93,9 @@ module "ecs" {
 }
 
 /* Create api gateway */
-module "api_gateway" {
+// not working
+// need to open public subnet NACL to 0.0.0.0/0 and then troubleshoot more
+/*module "api_gateway" {
   source               = "./modules/api_gateway"
   vpc_id               = module.vpc.vpc_id
   environment          = var.environment
@@ -101,7 +103,7 @@ module "api_gateway" {
   subnet_ids           = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
   cognito_user_pool_id = module.cognito.cognito_user_pool_id
   alb_dns_name         = module.ec2_webserver.alb_dns_name
-}
+}*/
 
 /* Create an amazon inspector to scan ec2 instances */
 /*module "inspector" {

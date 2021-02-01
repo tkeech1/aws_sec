@@ -9,12 +9,20 @@
 
 // apigateway security group
 resource "aws_security_group" "api_gateway_vpc_link_security_group" {
+  name   = "api-gateway-vpc-link-security-group"
   vpc_id = var.vpc_id
 
   ingress {
     description = "allow inbound http to the load balancer on the lb listener port"
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+  ingress {
+    description = "allow inbound http to the load balancer on the lb listener port"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
   }
