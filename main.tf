@@ -74,6 +74,11 @@ module "ec2_webserver" {
   depends_on                  = [module.s3, module.vpc]
 }
 
+module "code_update" {
+  source                = "./modules/code_update"
+  api_endpoint_dns_name = module.ec2_webserver.alb_dns_name
+}
+
 // create the ecs cluster
 module "ecs" {
   source                      = "./modules/ecs"

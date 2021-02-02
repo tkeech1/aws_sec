@@ -34,6 +34,12 @@ clean:
 apply-s3:
 	terraform init; terraform fmt; terraform apply -target=module.s3 -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
+apply-ec2:
+	terraform init; terraform fmt; terraform apply -target=module.ec2_webserver -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
+
+apply-code-update:
+	terraform init; terraform fmt; terraform apply -target=module.code_update -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
+
 apply-ecr:
 	terraform init; terraform fmt; terraform apply -target=module.ecr -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
@@ -55,7 +61,7 @@ push-image: authenticate-docker-ecr
 describe-image-repo:
 	aws ecr describe-images --repository-name bandit_repo/service
 
-web: apply-s3 apply-ecr upload-s3 build-image push-image apply
+web: apply-s3 apply-ecr upload-s3 apply-ec2 apply-code-update build-image push-image apply
 
 # pretty cool one liner but it's not used. terraform can create self-signed certs. see acm module.
 #create-cert:
