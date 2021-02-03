@@ -33,6 +33,32 @@ resource "aws_cognito_user_pool_client" "ecs_user_pool_client" {
   user_pool_id                         = aws_cognito_user_pool.user_pool.id
 }
 
+
+resource "aws_cognito_resource_server" "resource" {
+  identifier = "bandit-resource-server"
+  name       = "example"
+
+  scope {
+    scope_name        = "sample-scope"
+    scope_description = "a Sample Scope Description"
+  }
+
+  user_pool_id = aws_cognito_user_pool.user_pool.id
+}
+
+resource "aws_cognito_user_pool_client" "service_id_user_pool_client" {
+  name                                 = "ServiceIDUserPoolClient"
+  generate_secret                      = true
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows                  = ["client_credentials"]
+  allowed_oauth_scopes                 = ["bandit-resource-server/sample-scope"]
+  supported_identity_providers         = ["COGNITO"]
+  explicit_auth_flows                  = ["ALLOW_REFRESH_TOKEN_AUTH"]
+  callback_urls                        = ["https://${var.alb_dns_name}/oauth2/idpresponse"]
+  user_pool_id                         = aws_cognito_user_pool.user_pool.id
+  depends_on                           = [aws_cognito_resource_server.resource]
+}
+
 resource "aws_cognito_user_pool_domain" "cognito_domain" {
   domain       = "tdk"
   user_pool_id = aws_cognito_user_pool.user_pool.id

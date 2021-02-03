@@ -14,20 +14,22 @@ resource "aws_network_acl" "public_subnet_nacl" {
 
   // allow external http traffic inbound on the listener port
   ingress {
-    protocol   = "tcp"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = var.ip_cidr
+    protocol = "tcp"
+    rule_no  = 100
+    action   = "allow"
+    # cidr_block = var.ip_cidr TODO
+    cidr_block = "0.0.0.0/0"
     from_port  = 80
     to_port    = 80
   }
 
   // allow external http traffic inbound on the listener port
   ingress {
-    protocol   = "tcp"
-    rule_no    = 150
-    action     = "allow"
-    cidr_block = var.ip_cidr
+    protocol = "tcp"
+    rule_no  = 150
+    action   = "allow"
+    #cidr_block = var.ip_cidr TODO
+    cidr_block = "0.0.0.0/0"
     from_port  = 443
     to_port    = 443
   }

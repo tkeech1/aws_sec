@@ -11,6 +11,7 @@ import jwt
 import requests
 import base64
 import json
+import ssl
 
 st.set_page_config(layout="wide")
 
@@ -77,7 +78,7 @@ st.subheader("Get")
 
 async def get():
     async with httpx.AsyncClient(verify=False) as client:
-        r = await client.get("https://web-alb-1555643583.us-east-1.elb.amazonaws.com/")
+        r = await client.get("https://web-alb-2081687806.us-east-1.elb.amazonaws.com/")
     return st.subheader(r.json())
 
 
@@ -87,14 +88,14 @@ asyncio.run(get())
 async def request(value):
     async with httpx.AsyncClient(verify=False) as client:
         res = await client.post(
-            "https://web-alb-1555643583.us-east-1.elb.amazonaws.com/streamlit", json={"streamlit_says": value}
+            "https://web-alb-2081687806.us-east-1.elb.amazonaws.com/streamlit", json={"streamlit_says": value}
         )
     st.subheader(res.json())
 
 
 async def ws(test):
-    uri = "ws://web-alb-1555643583.us-east-1.elb.amazonaws.com:8000/ws"
-    async with websockets.connect(uri) as websocket:
+    uri = "wss://web-alb-2081687806.us-east-1.elb.amazonaws.com/ws"
+    async with websockets.connect(uri, ssl=ssl.SSLContext()) as websocket:
         # name = input("What's your name? ")
         # await websocket.send(name)
         # print(f"> {name}")

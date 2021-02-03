@@ -11,6 +11,7 @@ import jwt
 import requests
 import base64
 import json
+import ssl
 
 st.set_page_config(layout="wide")
 
@@ -93,8 +94,11 @@ async def request(value):
 
 
 async def ws(test):
-    uri = "ws://{{api_endpoint_dns_name}}:8000/ws"
-    async with websockets.connect(uri) as websocket:
+    uri = "wss://{{api_endpoint_dns_name}}/ws"
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    async with websockets.connect(uri, ssl=ssl_context) as websocket:
         # name = input("What's your name? ")
         # await websocket.send(name)
         # print(f"> {name}")

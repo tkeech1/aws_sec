@@ -38,6 +38,7 @@ apply-ec2:
 	terraform init; terraform fmt; terraform apply -target=module.ec2_webserver -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 apply-code-update:
+	terraform init; terraform fmt; terraform destroy -target=module.code_update -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 	terraform init; terraform fmt; terraform apply -target=module.code_update -auto-approve -var="environment=${ENVIRONMENT}" -var="ip_cidr=${IP_CIDR}" -var="email_address=${EMAIL_ADDRESS}";
 
 apply-ecr:

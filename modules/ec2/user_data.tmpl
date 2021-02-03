@@ -15,7 +15,7 @@ systemctl start awslogsd
 systemctl enable awslogsd.service
 
 # install app dependencies
-sudo -u ec2-user bash -c "pip3 install --user fastapi uvicorn"
+sudo -u ec2-user bash -c "pip3 install --user websockets fastapi uvicorn"
 #sudo -u ec2-user bash -c "pip3 install --user streamlit httpx websockets pyjwt cryptography"
 
 # download application files from s3
