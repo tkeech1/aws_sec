@@ -32,7 +32,7 @@ resource "aws_security_group" "api_gateway_vpc_link_security_group" {
   }
 }
 
-resource "aws_apigatewayv2_vpc_link" "api_gateway_link" {
+/*resource "aws_apigatewayv2_vpc_link" "api_gateway_link" {
   name               = "api_gateway_link"
   security_group_ids = [aws_security_group.api_gateway_vpc_link_security_group.id]
   subnet_ids         = var.subnet_ids
@@ -40,25 +40,37 @@ resource "aws_apigatewayv2_vpc_link" "api_gateway_link" {
   tags = {
     environment = var.environment
   }
-}
+}*/
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_api_gateway_rest_api" "rest_api" {
-  name = "rest_api"
-  body = templatefile("./modules/api_gateway/open_api3.json", { region = var.region, account_id = data.aws_caller_identity.current.account_id, cognito_user_pool_id = var.cognito_user_pool_id, vpc_link_id = aws_apigatewayv2_vpc_link.api_gateway_link.id, alb_dns_name = var.alb_dns_name })
+
+/*resource "aws_apigatewayv2_api" "http_api" {
+  name          = "http_api"
+  protocol_type = "HTTP"
+  #body          = templatefile("./modules/api_gateway/open_api3.json", { region = var.region, account_id = data.aws_caller_identity.current.account_id, cognito_user_pool_id = var.cognito_user_pool_id, vpc_link_id = aws_apigatewayv2_vpc_link.api_gateway_link.id, alb_dns_name = var.alb_dns_name })
+  #target = var.alb_dns_name
   #body = templatefile("./modules/api_gateway/open_api3.json_orig", {})
 
   tags = {
     environment = var.environment
   }
-  depends_on = [aws_apigatewayv2_vpc_link.api_gateway_link]
+  #depends_on = [aws_apigatewayv2_vpc_link.api_gateway_link]
 }
 
+resource "aws_apigatewayv2_route" "route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "$default"
+  target    = "https://${var.alb_dns_name}"
+}
 
-/*resource "aws_api_gateway_deployment" "api_gateway_deployment" {
-  rest_api_id = aws_api_gateway_rest_api.rest_api.id
-  stage_name  = var.environment
+resource "aws_apigatewayv2_integration" "integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "HTTP_PROXY"
+}
+
+resource "aws_apigatewayv2_deployment" "api_gateway_deployment" {
+  api_id = aws_apigatewayv2_api.http_api.id
 
   lifecycle {
     create_before_destroy = true

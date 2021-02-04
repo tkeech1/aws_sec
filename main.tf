@@ -69,7 +69,7 @@ module "ec2_webserver" {
   environment                 = var.environment
   ip_cidr                     = var.ip_cidr
   cognito_user_pool_arn       = module.cognito.cognito_user_pool_arn
-  cognito_user_pool_client_id = module.cognito.cognito_user_pool_client_id
+  cognito_user_pool_client_id = module.cognito.cognito_service_id_pool_client_id
   cognito_domain              = module.cognito.cognito_domain
   depends_on                  = [module.s3, module.vpc]
 }
@@ -98,17 +98,15 @@ module "ecs" {
 }
 
 /* Create api gateway */
-// not working
-// need to open public subnet NACL to 0.0.0.0/0 and then troubleshoot more
-/*module "api_gateway" {
+module "api_gateway" {
   source               = "./modules/api_gateway"
   vpc_id               = module.vpc.vpc_id
   environment          = var.environment
   region               = "us-east-1"
-  subnet_ids           = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
-  cognito_user_pool_id = module.cognito.cognito_user_pool_id
+  subnet_ids           = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id, module.vpc.public_subnet_1_id, module.vpc.public_subnet_2_id]
+  cognito_user_pool_id = module.cognito.cognito_service_id_pool_client_id
   alb_dns_name         = module.ec2_webserver.alb_dns_name
-}*/
+}
 
 /* Create an amazon inspector to scan ec2 instances */
 /*module "inspector" {

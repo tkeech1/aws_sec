@@ -115,3 +115,4 @@ tmp*
 web_url*
 */output/*
 certs*
+code/streamlit_app.py
