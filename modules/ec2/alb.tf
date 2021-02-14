@@ -45,7 +45,7 @@ resource "aws_security_group" "load_balancer_security_group" {
 // create an application load balancer
 resource "aws_lb" "web_alb" {
   name                       = "web-alb"
-  internal                   = false
+  internal                   = true
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.load_balancer_security_group.id]
   subnets                    = [var.public_subnet_1_id, var.public_subnet_2_id]
